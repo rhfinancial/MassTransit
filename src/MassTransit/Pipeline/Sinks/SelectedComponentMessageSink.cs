@@ -26,11 +26,11 @@ namespace MassTransit.Pipeline.Sinks
 		where TMessage : class
 		where TComponent : class, Consumes<TMessage>.Selected
 	{
-		private readonly IObjectBuilder _builder;
+		private readonly Func<TComponent> _getComponent;
 
-		public SelectedComponentMessageSink(ISubscriberContext context)
+		public SelectedComponentMessageSink(Func<TComponent> getComponent)
 		{
-			_builder = context.Builder;
+			_getComponent = getComponent;
 		}
 
 		public void Dispose()
@@ -39,38 +39,24 @@ namespace MassTransit.Pipeline.Sinks
 
 		public IEnumerable<Action<TMessage>> Enumerate(TMessage message)
 		{
-			Consumes<TMessage>.Selected consumer = BuildConsumer();
+			TComponent component = _getComponent();
 
 			try
 			{
-				if (consumer.Accept(message) == false)
+				if (component.Accept(message) == false)
 					yield break;
 
-				yield return consumer.Consume;
+				yield return component.Consume;
 			}
 			finally
 			{
-				Release(consumer);
+				// TODO I think Castle sucks, so make sure your lifecycle is such that castle is not tracking your component
 			}
 		}
 
 		public bool Inspect(IPipelineInspector inspector)
 		{
 			return inspector.Inspect(this);
-		}
-
-		private void Release(Consumes<TMessage>.Selected consumer)
-		{
-			_builder.Release(consumer.TranslateTo<TComponent>());
-		}
-
-		private Consumes<TMessage>.Selected BuildConsumer()
-		{
-			TComponent component = _builder.GetInstance<TComponent>();
-
-			Consumes<TMessage>.Selected consumer = component.TranslateTo<Consumes<TMessage>.Selected>();
-
-			return consumer;
 		}
 	}
 }

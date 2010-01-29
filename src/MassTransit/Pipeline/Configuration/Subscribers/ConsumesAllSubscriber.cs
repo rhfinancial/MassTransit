@@ -35,7 +35,7 @@ namespace MassTransit.Pipeline.Configuration.Subscribers
 			where TMessage : class
 			where TComponent : class, Consumes<TMessage>.All
 		{
-			var sink = new ComponentMessageSink<TComponent, TMessage>(context);
+			var sink = new ComponentMessageSink<TComponent, TMessage>(() => context.Builder.GetInstance<TComponent>());
 
 			return context.Pipeline.ConnectToRouter(sink, () => context.SubscribedTo<TMessage>());
 		}

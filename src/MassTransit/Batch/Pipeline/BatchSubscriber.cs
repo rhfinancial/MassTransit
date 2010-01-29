@@ -59,7 +59,7 @@ namespace MassTransit.Batch.Pipeline
 
             var router = configurator.FindOrCreate<TMessage, TBatchId>();
 
-            var result = router.Connect(new ComponentMessageSink<TComponent, Batch<TMessage, TBatchId>>(context));
+            var result = router.Connect(new ComponentMessageSink<TComponent, Batch<TMessage, TBatchId>>(() => context.Builder.GetInstance<TComponent>()));
 
 			UnsubscribeAction remove = context.SubscribedTo<TMessage>();
 

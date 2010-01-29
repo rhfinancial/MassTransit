@@ -31,12 +31,12 @@ namespace MassTransit.Saga.Configuration
 		private IServiceBus _bus;
 		private ISagaRepository<TSaga> _repository;
 
-		public SagaStateMachineMessageSinkFactory(ISubscriberContext context, ISagaPolicyFactory policyFactory)
+		public SagaStateMachineMessageSinkFactory(ISubscriberContext context, ISagaPolicyFactory policyFactory, ISagaRepository<TSaga> repository)
 		{
 			_context = context;
 			_policyFactory = policyFactory;
 			_bus = _context.Data as IServiceBus;
-			_repository = _context.Builder.GetInstance<ISagaRepository<TSaga>>();
+			_repository = repository;
 		}
 
 		public IPipelineSink<TMessage> Create(DataEvent<TSaga, TMessage> eevent, IEnumerable<State> states)

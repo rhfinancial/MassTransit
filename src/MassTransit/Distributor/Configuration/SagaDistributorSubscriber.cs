@@ -92,7 +92,7 @@ namespace MassTransit.Distributor.Configuration
 			where TSaga : SagaStateMachine<TSaga>, ISaga
 			where TMessage : class
 		{
-			var factory = new SagaStateMachineMessageSinkFactory<TSaga, TMessage>(context, _policyFactory);
+			var factory = new SagaStateMachineMessageSinkFactory<TSaga, TMessage>(context, _policyFactory, context.Builder.GetInstance<ISagaRepository<TSaga>>());
 			IPipelineSink<TMessage> sink = factory.Create(eevent, states);
 
 			var workerSink = new SagaWorkerMessageSink<TSaga, TMessage>(worker, sink, context.Data as IServiceBus);

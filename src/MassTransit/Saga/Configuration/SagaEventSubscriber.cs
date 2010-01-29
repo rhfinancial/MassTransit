@@ -39,7 +39,7 @@ namespace MassTransit.Saga.Configuration
 		private UnsubscribeAction ConnectTo<TMessage>(DataEvent<TSaga, TMessage> eevent, IEnumerable<State> states)
 			where TMessage : class
 		{
-			var factory = new SagaStateMachineMessageSinkFactory<TSaga, TMessage>(_context, _policyFactory);
+			var factory = new SagaStateMachineMessageSinkFactory<TSaga, TMessage>(_context, _policyFactory, _context.Builder.GetInstance<ISagaRepository<TSaga>>());
 			IPipelineSink<TMessage> sink = factory.Create(eevent, states);
 
 			return _context.Pipeline.ConnectToRouter(sink, () => _context.SubscribedTo<TMessage>());

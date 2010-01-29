@@ -330,6 +330,8 @@
     <Compile Include="Transports\MulticastUdpTransport.cs" />
     <Compile Include="Transports\NullTransport.cs" />
     <Compile Include="Transports\StreamEndpoint.cs" />
+    <Compile Include="UnregisterAction.cs" />
+    <Compile Include="UnsubscribeAction.cs" />
     <Compile Include="Util\BranchEvaluator.cs" />
     <Compile Include="Util\EvaluationCandidateSelector.cs" />
     <Compile Include="Util\ExpressionVisitor.cs" />
@@ -398,8 +400,6 @@
     <Compile Include="Pipeline\Configuration\MessageFilterConfigurator.cs" />
     <Compile Include="Pipeline\Configuration\MessageFilterConfiguratorScope.cs" />
     <Compile Include="Pipeline\Inspectors\PipelineInspectorBase.cs" />
-    <Compile Include="Serialization\BinaryMessageEnvelope.cs" />
-    <Compile Include="Serialization\ExtensionsToMessageEnvelope.cs" />
     <Compile Include="ExtensionsToServiceBus.cs" />
     <Compile Include="Internal\ServiceContainer.cs" />
     <Compile Include="Services\Metadata\Client\MessageModelFilter.cs" />
@@ -461,7 +461,7 @@
     <Compile Include="Pipeline\Inspectors\PipelineViewer.cs" />
     <Compile Include="Pipeline\Configuration\MessagePipelineConfigurator.cs" />
     <Compile Include="Pipeline\Sinks\SelectedComponentMessageSink.cs" />
-    <Compile Include="Serialization\MessageEnvelopeBase.cs" />
+    <Compile Include="Serialization\MessageEnvelope.cs" />
     <Compile Include="Serialization\BinaryMessageSerializer.cs" />
     <Compile Include="Serialization\IMessageSerializer.cs" />
     <Compile Include="Serialization\XmlMessageEnvelope.cs" />

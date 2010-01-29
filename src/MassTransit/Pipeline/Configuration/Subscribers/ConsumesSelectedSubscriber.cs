@@ -39,7 +39,7 @@ namespace MassTransit.Pipeline.Configuration.Subscribers
 			where TMessage : class
 			where TComponent : class, Consumes<TMessage>.Selected
 		{
-			var sink = new SelectedComponentMessageSink<TComponent, TMessage>(context);
+			var sink = new SelectedComponentMessageSink<TComponent, TMessage>(() => context.Builder.GetInstance<TComponent>());
 
 			return context.Pipeline.ConnectToRouter(sink, () => context.SubscribedTo<TMessage>());
 		}

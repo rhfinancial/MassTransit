@@ -14,7 +14,7 @@ namespace MassTransit.Pipeline.Sinks
 {
 	using System;
 
-	public class InstanceMessageSink<TMessage> : 
+	public class InstanceMessageSink<TMessage> :
 		InstanceMessageSinkBase<TMessage>
 		where TMessage : class
 	{

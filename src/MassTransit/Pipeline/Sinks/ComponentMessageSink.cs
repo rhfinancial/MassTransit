@@ -16,7 +16,7 @@ namespace MassTransit.Pipeline.Sinks
 	using System.Collections.Generic;
 	using Exceptions;
 
-    /// <summary>
+	/// <summary>
 	/// Routes messages to instances of subscribed components. A new instance of the component
 	/// is created from the container for each message received.
 	/// </summary>
@@ -27,11 +27,11 @@ namespace MassTransit.Pipeline.Sinks
 		where TMessage : class
 		where TComponent : class, Consumes<TMessage>.All
 	{
-		private readonly IObjectBuilder _builder;
+		private readonly Func<TComponent> _getComponent;
 
-		public ComponentMessageSink(ISubscriberContext context)
+		public ComponentMessageSink(Func<TComponent> getComponent)
 		{
-			_builder = context.Builder;
+			_getComponent = getComponent;
 		}
 
 		public void Dispose()
@@ -40,37 +40,23 @@ namespace MassTransit.Pipeline.Sinks
 
 		public IEnumerable<Action<TMessage>> Enumerate(TMessage message)
 		{
-			Consumes<TMessage>.All consumer = BuildConsumer();
+			TComponent component = _getComponent();
+			if (component == null)
+				throw new ConfigurationException(string.Format("Unable to resolve type '{0}'", typeof (TComponent)));
 
 			try
 			{
-				yield return consumer.Consume;
+				yield return component.Consume;
 			}
 			finally
 			{
-				Release(consumer);
+				// TODO I think Castle sucks, so make sure your lifecycle is such that castle is not tracking your component
 			}
 		}
 
 		public bool Inspect(IPipelineInspector inspector)
 		{
 			return inspector.Inspect(this);
-		}
-
-		private void Release(Consumes<TMessage>.All consumer)
-		{
-			_builder.Release(consumer.TranslateTo<TComponent>());
-		}
-
-		private Consumes<TMessage>.All BuildConsumer()
-		{
-			TComponent component = _builder.GetInstance<TComponent>();
-			if (component == null)
-				throw new ConfigurationException(string.Format("Unable to resolve type '{0}' from container: ", typeof(TComponent)));
-
-			Consumes<TMessage>.All consumer = component.TranslateTo<Consumes<TMessage>.All>();
-
-			return consumer;
 		}
 	}
 }

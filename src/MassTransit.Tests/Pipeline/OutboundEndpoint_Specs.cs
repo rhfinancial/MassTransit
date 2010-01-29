@@ -13,6 +13,7 @@
 namespace MassTransit.Tests.Pipeline
 {
 	using System;
+	using Context;
 	using MassTransit.Pipeline;
 	using MassTransit.Pipeline.Configuration;
 	using MassTransit.Pipeline.Inspectors;
@@ -46,7 +47,18 @@ namespace MassTransit.Tests.Pipeline
 
 			PingMessage message = new PingMessage();
 
-			endpoint.Expect(x => x.Send(message));
+			Action<IPublishContext> contextAction = null;
+
+			PublishContext context = new PublishContext();
+
+			bus.Stub(x => x.Context<IPublishContext>(null)).IgnoreArguments()
+				.WhenCalled(invocation =>
+					{
+						var action = invocation.Arguments[0] as Action<IPublishContext>;
+						action(context);
+					});
+
+			endpoint.Expect(x => x.Send(message, context)).IgnoreArguments();
 
 			_pipeline.Dispatch(message);
 

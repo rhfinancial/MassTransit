@@ -35,7 +35,7 @@ namespace MassTransit.Serialization
 			MessageType = messageType.ToMessageName();
 		}
 
-		public object Message { get; private set; }
+		public object Message { get; set; }
 
 		public static XmlMessageEnvelope Create<T>(T message, ISendContext context)
 		{
