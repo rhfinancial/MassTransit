@@ -172,6 +172,8 @@ namespace MassTransit
 
 			Context<IPublishContext>(x =>
 				{
+					x.Initialize();
+
 					x.SetSourceAddress(Endpoint.Uri);
 					x.SetMessageType(typeof (T));
 
@@ -206,8 +208,6 @@ namespace MassTransit
 					ConsumerCount = publishedCount,
 					Duration = publishDuration.Elapsed,
 				});
-
-			Context<IPublishContext>(x => x.Initialize());
 		}
 
 		public TService GetService<TService>()

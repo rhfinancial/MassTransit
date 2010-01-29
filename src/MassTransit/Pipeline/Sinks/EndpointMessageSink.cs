@@ -43,12 +43,15 @@ namespace MassTransit.Pipeline.Sinks
 		{
 			yield return x =>
 				{
-					if(_bus.PublishContext(context => context.WasEndpointAlreadySent(_endpoint.Uri)))
-						return;
+					_bus.Context<IPublishContext>(context =>
+						{
+							if (!context.WasEndpointAlreadySent(_endpoint.Uri))
+							{
+								_endpoint.Send(x, context);
 
-					_endpoint.Send(x);
-
-					_bus.PublishContext(context => context.NotifyForMessageConsumer(x, _endpoint));
+								context.NotifyForMessageConsumer(x, _endpoint);
+							}
+						});
 				}; 
 		}
 

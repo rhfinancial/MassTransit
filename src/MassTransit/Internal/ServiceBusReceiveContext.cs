@@ -28,16 +28,16 @@ namespace MassTransit.Internal
 	{
 		private static readonly ILog _log = LogManager.GetLogger(typeof (ServiceBusReceiveContext));
 
-		private readonly Stopwatch _receiveTime;
-		private readonly Stopwatch _consumeTime;
 		private readonly IServiceBus _bus;
-		private readonly IObjectBuilder _objectBuilder;
+		private readonly Stopwatch _consumeTime;
 		private readonly Pipe _eventAggregator;
-		private IEnumerator<Action<object>> _consumers;
-		private int _consumeCount;
-		private bool _receiveNotified;
-		private bool _consumeNotified;
+		private readonly IObjectBuilder _objectBuilder;
+		private readonly Stopwatch _receiveTime;
 		private readonly TimeSpan _receiveTimeout;
+		private int _consumeCount;
+		private bool _consumeNotified;
+		private IEnumerator<Action<object>> _consumers;
+		private bool _receiveNotified;
 
 		public ServiceBusReceiveContext(IServiceBus bus, IObjectBuilder objectBuilder, Pipe eventAggregator, TimeSpan receiveTimeout)
 		{
@@ -54,36 +54,36 @@ namespace MassTransit.Internal
 		{
 			try
 			{
-				if(_log.IsDebugEnabled)
-					_log.DebugFormat("Calling Receive on {0} from thread {1} ({2})", _bus.Endpoint.Uri, 
+				if (_log.IsDebugEnabled)
+					_log.DebugFormat("Calling Receive on {0} from thread {1} ({2})", _bus.Endpoint.Uri,
 						Thread.CurrentThread.ManagedThreadId, _receiveTimeout);
 
 				_receiveTime.Start();
 
-				_bus.Endpoint.Receive(message =>
+				_bus.Context<IReceiveContext>(context =>
 					{
-						if (_log.IsDebugEnabled)
-							_log.DebugFormat("Enumerating pipeline on {0} from thread {1}", _bus.Endpoint.Uri, 
-								Thread.CurrentThread.ManagedThreadId);
-
-						_bus.Context<IReceiveContext>(x =>
+						_bus.Endpoint.Receive(message =>
 							{
-								x.SetBus(_bus);
-								x.SetMessage(message);
-								x.SetObjectBuilder(_objectBuilder);
-							});
+								if (_log.IsDebugEnabled)
+									_log.DebugFormat("Enumerating pipeline on {0} from thread {1}", _bus.Endpoint.Uri,
+										Thread.CurrentThread.ManagedThreadId);
 
-						IEnumerable<Action<object>> enumerable = _bus.InboundPipeline.Enumerate(message);
+								context.SetBus(_bus);
+								context.SetMessage(message);
+								context.SetObjectBuilder(_objectBuilder);
 
-						_consumers = enumerable.GetEnumerator();
-						if (!_consumers.MoveNext())
-						{
-							_consumers.Dispose();
-							return null;
-						}
+								IEnumerable<Action<object>> enumerable = _bus.InboundPipeline.Enumerate(message);
 
-						return DeliverMessageToConsumers;
-					}, _bus.Context<IReceiveContext, IReceiveContext>(x => x), _receiveTimeout);
+								_consumers = enumerable.GetEnumerator();
+								if (!_consumers.MoveNext())
+								{
+									_consumers.Dispose();
+									return null;
+								}
+
+								return DeliverMessageToConsumers;
+							}, context, _receiveTimeout);
+					});
 			}
 			catch (Exception ex)
 			{
@@ -162,9 +162,9 @@ namespace MassTransit.Internal
 		// this is called via reflection
 		// ReSharper disable UnusedMember.Local
 		private void PublishFault<T>(T message) where T : class
-		// ReSharper restore UnusedMember.Local
+			// ReSharper restore UnusedMember.Local
 		{
-		    _bus.ConsumeContext(x => x.GenerateFault(message));
+			_bus.ConsumeContext(x => x.GenerateFault(message));
 		}
 
 		private void ReportConsumerTime(Type messageType, TimeSpan receiveTime, TimeSpan consumeTime)
@@ -192,7 +192,7 @@ namespace MassTransit.Internal
 
 		private void NotifyReceiveCompleted()
 		{
-			if(_receiveNotified)
+			if (_receiveNotified)
 				return;
 
 			_eventAggregator.Send(new ReceiveCompleted());
@@ -201,7 +201,7 @@ namespace MassTransit.Internal
 
 		private void NotifyConsumeCompleted()
 		{
-			if(_consumeNotified)
+			if (_consumeNotified)
 				return;
 
 			_eventAggregator.Send(new ConsumeCompleted());
