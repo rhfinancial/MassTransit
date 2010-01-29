@@ -71,13 +71,5 @@ namespace MassTransit.Context
 
 			bus.Context(accessor);
 		}
-
-		public static TResult MessageContext<TResult>(this IServiceBus bus, Func<IMessageContext, TResult> accessor)
-		{
-			if (bus == null)
-				throw new ArgumentNullException("bus");
-
-			return bus.Context(accessor);
-		}
 	}
 }

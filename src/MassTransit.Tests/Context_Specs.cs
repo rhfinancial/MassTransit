@@ -46,25 +46,24 @@ namespace MassTransit.Tests
 		[Test]
 		public void Should_allow_access_to_the_source_address()
 		{
-			LocalBus.MessageContext(x => x.SourceAddress).ShouldEqual(_sourceAddress);
+			LocalBus.PublishContext(x => x.SourceAddress).ShouldEqual(_sourceAddress);
 		}
 
 		[Test]
 		public void Should_allow_access_to_the_destination_address()
 		{
-			LocalBus.MessageContext(x => x.DestinationAddress).ShouldEqual(_destinationAddress);
-		
+			LocalBus.PublishContext(x => x.DestinationAddress).ShouldEqual(_destinationAddress);
 		}
 		[Test]
 		public void Should_allow_access_to_the_fault_address()
 		{
-			LocalBus.MessageContext(x => x.FaultAddress).ShouldEqual(_faultAddress);
+			LocalBus.PublishContext(x => x.FaultAddress).ShouldEqual(_faultAddress);
 		}
 
 		[Test]
 		public void Should_allow_access_to_the_response_address()
 		{
-			LocalBus.MessageContext(x => x.ResponseAddress).ShouldEqual(_responseAddress);
+			LocalBus.PublishContext(x => x.ResponseAddress).ShouldEqual(_responseAddress);
 		}
 	}
 }
