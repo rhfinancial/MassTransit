@@ -15,6 +15,7 @@ namespace MassTransit
 	using System;
 	using System.Diagnostics;
 	using System.Reflection;
+	using Context;
 	using Events;
 	using Exceptions;
 	using Internal;
@@ -48,6 +49,7 @@ namespace MassTransit
 		private ConsumerPool _consumerPool;
 		private ServiceBusInstancePerformanceCounters _counters;
 		private ISubscriptionScope _eventAggregatorScope;
+		private IContextProvider _contextProvider;
 
 		static ServiceBus()
 		{
@@ -85,6 +87,8 @@ namespace MassTransit
 			_eventAggregatorScope = _eventAggregator.NewSubscriptionScope();
 
 			_serviceContainer = new ServiceContainer(this);
+
+			_contextProvider = new ThreadLocalContextProvider();
 
 			OutboundPipeline = MessagePipelineConfigurator.CreateDefault(ObjectBuilder, this);
 
@@ -198,6 +202,16 @@ namespace MassTransit
 		public TService GetService<TService>()
 		{
 			return _serviceContainer.GetService<TService>();
+		}
+
+		public TResult Context<TContext, TResult>(Func<TContext, TResult> accessor)
+		{
+			return _contextProvider.Context(accessor);
+		}
+
+		public void Context<TContext>(Action<TContext> action)
+		{
+			_contextProvider.Context(action);
 		}
 
 		public IMessagePipeline OutboundPipeline { get; private set; }

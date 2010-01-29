@@ -141,6 +141,15 @@
     <Compile Include="Actors\IActorRepository.cs" />
     <Compile Include="Actors\InMemoryActorRepository.cs" />
     <Compile Include="Actors\StateDrivenActor.cs" />
+    <Compile Include="Context\AbstractMessageContext.cs" />
+    <Compile Include="Context\ConsumerContext.cs" />
+    <Compile Include="Context\ContextExtensions.cs" />
+    <Compile Include="Context\IConsumerContext.cs" />
+    <Compile Include="Context\IMessageContext.cs" />
+    <Compile Include="Context\IPublishContext.cs" />
+    <Compile Include="Context\ISendContext.cs" />
+    <Compile Include="Context\PublishContext.cs" />
+    <Compile Include="Context\ThreadLocalContextProvider.cs" />
     <Compile Include="CurrentMessage.cs" />
     <Compile Include="Distributor\Configuration\DistributorSubscriber.cs" />
     <Compile Include="Distributor\Configuration\SagaDistributorSubscriber.cs" />
@@ -201,6 +210,7 @@
     <Compile Include="Grid\Messages\ServiceMessageAgreed.cs" />
     <Compile Include="Grid\Sagas\QuorumState.cs" />
     <Compile Include="Grid\ServiceTypeExtensions.cs" />
+    <Compile Include="Context\IContextProvider.cs" />
     <Compile Include="IEndpointAddress.cs" />
     <Compile Include="Internal\AbstractEndpoint.cs" />
     <Compile Include="Events\ConsumeCompleted.cs" />
@@ -212,6 +222,7 @@
     <Compile Include="Events\MessageReceived.cs" />
     <Compile Include="Internal\ServiceBusReceiveContext.cs" />
     <Compile Include="Internal\ThreadPoolConsumerPool.cs" />
+    <Compile Include="Context\IReceiveContext.cs" />
     <Compile Include="ITransport.cs" />
     <Compile Include="Monitoring\InstancePerformanceCounter.cs" />
     <Compile Include="Monitoring\IPerformanceCounter.cs" />

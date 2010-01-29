@@ -102,6 +102,22 @@ namespace MassTransit
 		/// <returns></returns>
     	TService GetService<TService>();
 
+		/// <summary>
+		/// Returns a value from the specified context, using the current thread context as the key index
+		/// </summary>
+		/// <typeparam name="TContext">The type of context being requested</typeparam>
+		/// <typeparam name="TResult">The type of the property being returned</typeparam>
+		/// <param name="accessor">The accessor method to return the value</param>
+		/// <returns>The value returned by the accessor function</returns>
+		TResult Context<TContext, TResult>(Func<TContext, TResult> accessor);
+
+		/// <summary>
+		/// Calls the action with the requested context interface
+		/// </summary>
+		/// <typeparam name="TContext"></typeparam>
+		/// <param name="action"></param>
+		void Context<TContext>(Action<TContext> action);
+
 		IMessagePipeline OutboundPipeline { get; }
 
 		IMessagePipeline InboundPipeline { get; }

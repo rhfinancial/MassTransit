@@ -27,6 +27,12 @@ namespace MassTransit.TestFramework.Fixtures
 		{
 			SetupSubscriptionService();
 
+			if (LocalUri == null)
+				throw new ArgumentException("The LocalUri property must be specified as part of the test fixture.");
+
+			if (RemoteUri == null)
+				throw new ArgumentException("The RemoteUri property must be specified as part of the test fixture.");
+
 			LocalBus = SetupServiceBus(LocalUri);
 			RemoteBus = SetupServiceBus(RemoteUri);
 		}

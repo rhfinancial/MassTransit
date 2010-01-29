@@ -10,33 +10,30 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
-namespace MassTransit.TestFramework.Fixtures
+namespace MassTransit.Context
 {
 	using System;
-	using NUnit.Framework;
 
-	[TestFixture]
-	public class LocalTestFixture<TEndpoint> :
-		EndpointTestFixture<TEndpoint>
-		where TEndpoint : IEndpoint
+	public interface ISendContext :
+		IMessageContext
 	{
-		[TestFixtureSetUp]
-		public void LocalTestFixtureSetup()
-		{
-			if (LocalUri == null)
-				throw new ArgumentException("The LocalUri property must be specified as part of the test fixture.");
+		void SetSourceAddress(Uri uri);
+		void SetSourceAddress(string uriString);
 
-			LocalBus = SetupServiceBus(LocalUri);
-		}
+		void SetDestinationAddress(Uri uri);
+		void SetDestinationAddress(string uriString);
 
-		[TestFixtureTearDown]
-		public void LocalTestFixtureTeardown()
-		{
-			LocalBus = null;
-		}
+		void SetResponseAddress(Uri uri);
+		void SetResponseAddress(string uriString);
 
-		protected Uri LocalUri { get; set; }
+		void SetFaultAddress(Uri uri);
+		void SetFaultAddress(string uriString);
 
-		protected IServiceBus LocalBus { get; private set; }
+		void SetRetryCount(int retryCount);
+
+		void SetExpirationTime(DateTime value);
+
+		void SetMessageType(Type messageType);
+		void SetMessageType(string messageType);
 	}
 }

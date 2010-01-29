@@ -71,6 +71,16 @@ namespace MassTransit.Internal
 			throw new System.NotImplementedException();
 		}
 
+		public TResult Context<TContext, TResult>(Func<TContext, TResult> accessor)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void Context<TContext>(Action<TContext> action)
+		{
+			throw new NotImplementedException();
+		}
+
 		public IMessagePipeline OutboundPipeline
 		{
 			get { throw new System.NotImplementedException(); }
