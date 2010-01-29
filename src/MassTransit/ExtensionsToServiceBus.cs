@@ -14,7 +14,7 @@ namespace MassTransit
 {
 	using System;
 	using System.Collections.Generic;
-	using Grid;
+	using Context;
 	using Internal;
 	using Internal.RequestResponse;
 
@@ -42,6 +42,20 @@ namespace MassTransit
 		{
 			return new DisposableUnsubscribeAction(action);
 		}
+
+
+		/// <summary>
+		/// Extension method to simplify the syntax for responding to a message
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="bus"></param>
+		/// <param name="message"></param>
+		public static void Respond<T>(this IServiceBus bus, T message)
+			where T : class
+		{
+			bus.ConsumeContext(x => x.Respond(message));
+		}
+
 
 		public static UnsubscribeAction Combine(this IEnumerable<UnsubscribeAction> actions)
 		{

@@ -13,11 +13,8 @@
 namespace MassTransit.Serialization
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Runtime.Remoting.Messaging;
 	using Context;
-	using Internal;
-	using Magnum.ObjectExtensions;
 
 	public class BinaryMessageEnvelope :
 		MessageEnvelopeBase
@@ -25,56 +22,16 @@ namespace MassTransit.Serialization
 		private const string ConversationIdKey = "ConversationId";
 		private const string CorrelationIdKey = "CorrelationId";
 		private const string DestinationAddressKey = "DestinationAddress";
+		private const string ExpirationTimeKey = "ExpirationTime";
 		private const string FaultAddressKey = "FaultAddress";
 		private const string MessageIdKey = "MessageId";
 		private const string MessageTypeKey = "MessageType";
 		private const string ResponseAddressKey = "ResponseAddress";
 		private const string RetryCountKey = "RetryCount";
-		private const string ExpirationTimeKey = "ExpirationTime";
 		private const string SourceAddressKey = "SourceAddress";
 
 		private BinaryMessageEnvelope()
 		{
-		}
-
-		public Header[] ToHeaders()
-		{
-			var headers = new List<Header>();
-
-			var context = OutboundMessage.Headers;
-
-			if (context.SourceAddress != null)
-			{
-				headers.Add(new Header(SourceAddressKey, context.SourceAddress));
-			}
-
-			if (context.DestinationAddress != null)
-			{
-				headers.Add(new Header(DestinationAddressKey, context.DestinationAddress));
-			}
-
-			if (context.ResponseAddress != null)
-			{
-				headers.Add(new Header(ResponseAddressKey, context.ResponseAddress));
-			}
-
-			if (context.FaultAddress != null)
-			{
-				headers.Add(new Header(FaultAddressKey, context.FaultAddress));
-			}
-
-			if (!context.MessageType.IsNullOrEmpty())
-			{
-				headers.Add(new Header(MessageTypeKey, context.MessageType));
-			}
-
-			if (context.RetryCount > 0)
-				headers.Add(new Header(RetryCountKey, context.RetryCount));
-
-			if(context.ExpirationTime.HasValue)
-				headers.Add(new Header(ExpirationTimeKey, context.ExpirationTime.Value));
-
-			return headers.ToArray();
 		}
 
 		private void MapNameValuePair(string name, object value)

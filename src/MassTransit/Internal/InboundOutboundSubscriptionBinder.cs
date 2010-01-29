@@ -19,23 +19,25 @@ namespace MassTransit.Internal
 	{
 		private readonly IEndpoint _localEndpoint;
 		private readonly IMessagePipeline _outbound;
+		private readonly IServiceBus _bus;
 
-		public InboundOutboundSubscriptionBinder(IMessagePipeline outbound, IEndpoint localEndpoint)
+		public InboundOutboundSubscriptionBinder(IMessagePipeline outbound, IServiceBus bus, IEndpoint localEndpoint)
 		{
 			_outbound = outbound;
+			_bus = bus;
 			_localEndpoint = localEndpoint;
 		}
 
 		public UnsubscribeAction SubscribedTo<T>()
 			where T : class
 		{
-			return _outbound.Subscribe<T>(_localEndpoint);
+			return _outbound.Subscribe<T>(_bus, _localEndpoint);
 		}
 
 		public UnsubscribeAction SubscribedTo<T, K>(K correlationId)
 			where T : class, CorrelatedBy<K>
 		{
-			return _outbound.Subscribe<T, K>(correlationId, _localEndpoint);
+			return _outbound.Subscribe<T, K>(correlationId, _bus, _localEndpoint);
 		}
 	}
 }

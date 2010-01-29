@@ -47,31 +47,32 @@ namespace MassTransit.Transports.Msmq
 		public override void Send<T>(T message)
 		{
 			Send(message, new PublishContext());
-		}
+		}
+
     	public override void Send<T>(T message, ISendContext context)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			_transport.Send(msg =>
-				{
-					SetOutboundMessageHeaders<T>(context);
+    		_transport.Send(msg =>
+    			{
+    				SetOutboundMessageHeaders<T>(context);
 
-					PopulateTransportMessage(msg, message, context);
-                });
+    				PopulateTransportMessage(msg, message, context);
+    			}, context);
 		}
 
 		public override void Receive(Func<object, Action<object>> receiver, IReceiveContext context)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			_transport.Receive(ReceiveFromTransport(receiver, context));
+			_transport.Receive(ReceiveFromTransport(receiver, context), context);
 		}
 
 		public override void Receive(Func<object, Action<object>> receiver, IReceiveContext context, TimeSpan timeout)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			_transport.Receive(ReceiveFromTransport(receiver, context), timeout);
+			_transport.Receive(ReceiveFromTransport(receiver, context), context, timeout);
 		}
 
 		protected override void Dispose(bool disposing)
@@ -182,12 +183,12 @@ namespace MassTransit.Transports.Msmq
 
 	    private void MoveMessageToErrorTransport(Message message, IMessageContext context)
 	    {
-	        _errorTransport.Send(outbound =>
-	        	{
-	        		outbound.BodyStream = message.BodyStream;
+	    	_errorTransport.Send(outbound =>
+	    		{
+	    			outbound.BodyStream = message.BodyStream;
 
-	        		SetMessageExpiration(outbound, context);
-	        	});
+	    			SetMessageExpiration(outbound, context);
+	    		}, context);
 
 	        if (_log.IsDebugEnabled)
 	            _log.DebugFormat("MOVE:{0}:{1}:{2}", Address, _errorTransport.Address, message.Id);
@@ -200,7 +201,7 @@ namespace MassTransit.Transports.Msmq
     	{
 			if (context.ExpirationTime.HasValue)
     		{
-    			outbound.TimeToBeReceived = OutboundMessage.Headers.ExpirationTime.Value - DateTime.UtcNow;
+    			outbound.TimeToBeReceived = context.ExpirationTime.Value - DateTime.UtcNow;
     		}
     	}
 

@@ -13,6 +13,7 @@
 namespace MassTransit.Services.HealthMonitoring
 {
 	using System;
+	using Context;
 	using Internal;
 	using Magnum;
 	using Magnum.Actors;
@@ -58,7 +59,7 @@ namespace MassTransit.Services.HealthMonitoring
 		{
 			var response = new PingEndpointResponse(SystemId, _controlUri, _dataUri, _heartbeatIntervalInSeconds);
 
-			CurrentMessage.Respond(response);
+			_bus.ConsumeContext(x => x.Respond(response));
 		}
 
 		public void Dispose()

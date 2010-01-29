@@ -32,6 +32,38 @@ namespace MassTransit.Context
 			bus.Context(accessor);
 		}
 
+		public static TResult ConsumeContext<TResult>(this IServiceBus bus, Func<IConsumeContext, TResult> accessor)
+		{
+			if (bus == null)
+				throw new ArgumentNullException("bus");
+
+			return bus.Context(accessor);
+		}
+
+		public static void ConsumeContext(this IServiceBus bus, Action<IConsumeContext> accessor)
+		{
+			if (bus == null)
+				throw new ArgumentNullException("bus");
+
+			bus.Context(accessor);
+		}
+
+		public static TResult PublishContext<TResult>(this IServiceBus bus, Func<IPublishContext, TResult> accessor)
+		{
+			if (bus == null)
+				throw new ArgumentNullException("bus");
+
+			return bus.Context(accessor);
+		}
+
+		public static void PublishContext(this IServiceBus bus, Action<IPublishContext> accessor)
+		{
+			if (bus == null)
+				throw new ArgumentNullException("bus");
+
+			bus.Context(accessor);
+		}
+
 		public static void SendContext(this IServiceBus bus, Action<ISendContext> accessor)
 		{
 			if (bus == null)

@@ -18,6 +18,7 @@ namespace MassTransit.Transports.Nms
 	using System.Text;
 	using Apache.NMS;
 	using Apache.NMS.ActiveMQ;
+	using Context;
 	using Exceptions;
 	using Internal;
 	using log4net;
@@ -45,14 +46,14 @@ namespace MassTransit.Transports.Nms
 			get { return _address; }
 		}
 
-		public virtual void Receive(Func<Stream, Action<Stream>> receiver)
+		public virtual void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			Receive(receiver, TimeSpan.Zero);
+			Receive(receiver, context, TimeSpan.Zero);
 		}
 
-		public virtual void Receive(Func<Stream, Action<Stream>> receiver, TimeSpan timeout)
+		public virtual void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context, TimeSpan timeout)
 		{
 			if (_disposed) throw NewDisposedException();
 
@@ -118,7 +119,7 @@ namespace MassTransit.Transports.Nms
 			}
 		}
 
-		public virtual void Send(Action<Stream> sender)
+		public virtual void Send(Action<Stream> sender, IMessageContext context)
 		{
 			if (_disposed) throw NewDisposedException();
 
@@ -138,7 +139,7 @@ namespace MassTransit.Transports.Nms
 
 							ITextMessage textMessage = session.CreateTextMessage(text);
 
-							SetMessageExpiration(textMessage);
+							SetMessageExpiration(textMessage, context);
 
 							producer.DeliveryMode = MsgDeliveryMode.Persistent;
 							producer.Send(textMessage);
@@ -157,14 +158,6 @@ namespace MassTransit.Transports.Nms
 					_log.Error("A problem occurred communicating with the queue", ex);
 
 				Reconnect();
-			}
-		}
-
-		private static void SetMessageExpiration(IMessage outbound)
-		{
-			if (OutboundMessage.Headers.ExpirationTime.HasValue)
-			{
-				outbound.NMSTimeToLive = OutboundMessage.Headers.ExpirationTime.Value - DateTime.UtcNow;
 			}
 		}
 
@@ -263,6 +256,14 @@ namespace MassTransit.Transports.Nms
 		~NmsTransport()
 		{
 			Dispose(false);
+		}
+
+		private static void SetMessageExpiration(IMessage outbound, IMessageContext context)
+		{
+			if (context.ExpirationTime.HasValue)
+			{
+				outbound.NMSTimeToLive = context.ExpirationTime.Value - DateTime.UtcNow;
+			}
 		}
 	}
 }

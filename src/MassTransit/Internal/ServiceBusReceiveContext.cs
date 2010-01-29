@@ -164,7 +164,7 @@ namespace MassTransit.Internal
 		private void PublishFault<T>(T message) where T : class
 		// ReSharper restore UnusedMember.Local
 		{
-			CurrentMessage.GenerateFault(message);
+		    _bus.ConsumeContext(x => x.GenerateFault(message));
 		}
 
 		private void ReportConsumerTime(Type messageType, TimeSpan receiveTime, TimeSpan consumeTime)

@@ -14,6 +14,7 @@ namespace MassTransit.Pipeline.Sinks
 {
 	using System;
 	using System.Collections.Generic;
+	using Context;
 	using Internal;
 
 	/// <summary>
@@ -25,9 +26,11 @@ namespace MassTransit.Pipeline.Sinks
 		where TMessage : class
 	{
 		private readonly IEndpoint _endpoint;
+		private readonly IServiceBus _bus;
 
-		public EndpointMessageSink(IEndpoint endpoint)
+		public EndpointMessageSink(IServiceBus bus, IEndpoint endpoint)
 		{
+			_bus = bus;
 			_endpoint = endpoint;
 		}
 
@@ -40,12 +43,12 @@ namespace MassTransit.Pipeline.Sinks
 		{
 			yield return x =>
 				{
-					if(OutboundMessage.Context.WasEndpointAlreadySent(_endpoint.Uri))
+					if(_bus.PublishContext(context => context.WasEndpointAlreadySent(_endpoint.Uri)))
 						return;
 
 					_endpoint.Send(x);
 
-					OutboundMessage.Context.NotifyForMessageConsumer(message, _endpoint);
+					_bus.PublishContext(context => context.NotifyForMessageConsumer(x, _endpoint));
 				}; 
 		}
 

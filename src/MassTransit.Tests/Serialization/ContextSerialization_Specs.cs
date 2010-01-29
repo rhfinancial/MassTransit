@@ -13,6 +13,7 @@
 namespace MassTransit.Tests.Serialization
 {
 	using Configuration;
+	using Context;
 	using Magnum.DateTimeExtensions;
 	using MassTransit.Serialization;
 	using MassTransit.Serialization.Custom;
@@ -39,7 +40,7 @@ namespace MassTransit.Tests.Serialization
 
 			RemoteBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(RemoteBus.Endpoint.Uri, CurrentMessage.Headers.DestinationAddress);
+					Assert.AreEqual(RemoteBus.Endpoint.Uri, RemoteBus.ConsumeContext(x=>x.DestinationAddress));
 
 					received.Set(message);
 				});
@@ -58,7 +59,7 @@ namespace MassTransit.Tests.Serialization
 
 			RemoteBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(LocalBus.Endpoint.Uri, CurrentMessage.Headers.FaultAddress);
+					Assert.AreEqual(LocalBus.Endpoint.Uri, RemoteBus.ConsumeContext(x=>x.FaultAddress));
 
 					received.Set(message);
 				});
@@ -77,7 +78,7 @@ namespace MassTransit.Tests.Serialization
 
 			RemoteBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(typeof (PingMessage).ToMessageName(), CurrentMessage.Headers.MessageType);
+					Assert.AreEqual(typeof (PingMessage).ToMessageName(), RemoteBus.ConsumeContext(x=>x.MessageType));
 
 					received.Set(message);
 				});
@@ -96,7 +97,7 @@ namespace MassTransit.Tests.Serialization
 
 			RemoteBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(LocalBus.Endpoint.Uri, CurrentMessage.Headers.ResponseAddress);
+					Assert.AreEqual(LocalBus.Endpoint.Uri, RemoteBus.ConsumeContext(x=>x.ResponseAddress));
 
 					received.Set(message);
 				});
@@ -116,7 +117,7 @@ namespace MassTransit.Tests.Serialization
 			var retryCount = 69;
 			RemoteBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(retryCount, CurrentMessage.Headers.RetryCount);
+					Assert.AreEqual(retryCount, RemoteBus.ConsumeContext(x=>x.RetryCount));
 
 					received.Set(message);
 				});
@@ -135,7 +136,7 @@ namespace MassTransit.Tests.Serialization
 
 			RemoteBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(LocalBus.Endpoint.Uri, CurrentMessage.Headers.SourceAddress);
+					Assert.AreEqual(LocalBus.Endpoint.Uri, RemoteBus.ConsumeContext(x=>x.SourceAddress));
 
 					received.Set(message);
 				});

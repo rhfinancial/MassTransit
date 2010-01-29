@@ -14,6 +14,7 @@ namespace MassTransit.Tests
 {
 	using System;
 	using System.Collections.Generic;
+	using Context;
 	using Magnum.DateTimeExtensions;
 	using Messages;
 	using NUnit.Framework;
@@ -41,7 +42,7 @@ namespace MassTransit.Tests
 				{
 					pong.Set(new PongMessage(message.CorrelationId));
 
-					CurrentMessage.Respond(pong.Message);
+					RemoteBus.Respond(pong.Message);
 				});
 
 			LocalBus.Publish(ping);
@@ -69,7 +70,7 @@ namespace MassTransit.Tests
 				{
 					pong.Set(new PongMessage(message.CorrelationId));
 
-					CurrentMessage.Respond(pong.Message);
+					RemoteBus.Respond(pong.Message);
 				});
 
 			LocalBus.Publish(ping, context => context.SendResponseTo(LocalBus));
@@ -87,7 +88,7 @@ namespace MassTransit.Tests
 
 			LocalBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(LocalBus.Endpoint.Uri, CurrentMessage.Headers.DestinationAddress);
+					Assert.AreEqual(LocalBus.Endpoint.Uri, LocalBus.ConsumeContext(x => x.DestinationAddress));
 
 					received.Set(message);
 				});
@@ -104,7 +105,7 @@ namespace MassTransit.Tests
 
 			LocalBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(LocalBus.Endpoint.Uri, CurrentMessage.Headers.FaultAddress);
+					Assert.AreEqual(LocalBus.Endpoint.Uri, LocalBus.ConsumeContext(x => x.FaultAddress));
 
 					received.Set(message);
 				});
@@ -121,7 +122,7 @@ namespace MassTransit.Tests
 
 			LocalBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(LocalBus.Endpoint.Uri, CurrentMessage.Headers.ResponseAddress);
+					Assert.AreEqual(LocalBus.Endpoint.Uri, LocalBus.ConsumeContext(x=>x.ResponseAddress));
 
 					received.Set(message);
 				});
@@ -138,7 +139,7 @@ namespace MassTransit.Tests
 
 			LocalBus.Subscribe<PingMessage>(message =>
 				{
-					Assert.AreEqual(LocalBus.Endpoint.Uri, CurrentMessage.Headers.SourceAddress);
+					Assert.AreEqual(LocalBus.Endpoint.Uri, LocalBus.ConsumeContext(x=>x.SourceAddress));
 
 					received.Set(message);
 				});

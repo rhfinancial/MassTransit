@@ -14,6 +14,7 @@ namespace MassTransit.Tests.Actors
 {
 	using System;
 	using System.Threading;
+	using Context;
 	using Magnum;
 	using Magnum.DateTimeExtensions;
 	using Magnum.StateMachine;
@@ -51,7 +52,14 @@ namespace MassTransit.Tests.Actors
 		[Test, Ignore]
 		public void FirstTestName()
 		{
-			LocalBus.Subscribe<ActorRequest>(request => { CurrentMessage.Respond(new ActorResponse {RequestId = request.Id, Age = 27}); });
+			LocalBus.Subscribe<ActorRequest>(request =>
+				{
+					LocalBus.ConsumeContext(x => x.Respond(new ActorResponse
+						{
+							RequestId = request.Id,
+							Age = 27
+						}));
+				});
 
 			LocalBus.Subscribe<RequestResponseActor>();
 

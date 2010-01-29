@@ -14,6 +14,7 @@ namespace MassTransit.Transports.Msmq
 {
 	using System;
 	using System.Messaging;
+	using Context;
 
 	/// <summary>
 	/// A message-level interface to the MSMQ transport
@@ -27,10 +28,10 @@ namespace MassTransit.Transports.Msmq
 		/// Receive a message from the transport
 		/// </summary>
 		/// <param name="receiver"></param>
-		void Receive(Func<Message, Action<Message>> receiver);
+		void Receive(Func<Message, Action<Message>> receiver, IReceiveContext context);
 
-		void Receive(Func<Message, Action<Message>> receiver, TimeSpan timeout);
+		void Receive(Func<Message, Action<Message>> receiver, IReceiveContext context, TimeSpan timeout);
 
-		void Send(Action<Message> sender);
+		void Send(Action<Message> sender, IMessageContext context);
 	}
 }

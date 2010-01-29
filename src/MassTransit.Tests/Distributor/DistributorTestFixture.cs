@@ -14,6 +14,7 @@ namespace MassTransit.Tests.Distributor
 {
 	using System;
 	using Configuration;
+	using Context;
 	using Load.Messages;
 	using Magnum;
 	using Magnum.DateTimeExtensions;
@@ -38,7 +39,7 @@ namespace MassTransit.Tests.Distributor
 				});
 		}
 
-		private static Action<FirstCommand> FirstCommandConsumer(FirstCommand message)
+		private Action<FirstCommand> FirstCommandConsumer(FirstCommand message)
 		{
 			return command =>
 				{
@@ -46,7 +47,7 @@ namespace MassTransit.Tests.Distributor
 
 					var response = new FirstResponse(command.CorrelationId);
 
-					CurrentMessage.Respond(response);
+					LocalBus.ConsumeContext(x => x.Respond(response));
 				};
 		}
 	}

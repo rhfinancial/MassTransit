@@ -15,6 +15,7 @@ namespace MassTransit.Transports.Msmq
 	using System;
 	using System.Messaging;
 	using System.Transactions;
+	using Context;
 	using log4net;
 	using Magnum.DateTimeExtensions;
 
@@ -26,9 +27,14 @@ namespace MassTransit.Transports.Msmq
 		public TransactionalMsmqTransport(IMsmqEndpointAddress address)
 			: base(address)
 		{
+			TransactionTimeout = 120.Seconds();
+			IsolationLevel = IsolationLevel.Serializable;
 		}
 
-		public override void Receive(Func<Message, Action<Message>> receiver, TimeSpan timeout)
+		public IsolationLevel IsolationLevel { get; set; }
+		public TimeSpan TransactionTimeout { get; set; }
+
+		public override void Receive(Func<Message, Action<Message>> receiver, IReceiveContext context, TimeSpan timeout)
 		{
 			try
 			{
@@ -36,8 +42,8 @@ namespace MassTransit.Transports.Msmq
 
 				var options = new TransactionOptions
 					{
-						IsolationLevel = IsolationLevel.Serializable,
-						Timeout = 30.Seconds(),
+						IsolationLevel = IsolationLevel,
+						Timeout = TransactionTimeout,
 					};
 
 				using (var scope = new TransactionScope(TransactionScopeOption.Required, options))
@@ -65,7 +71,7 @@ namespace MassTransit.Transports.Msmq
 
 		protected override void SendMessage(MessageQueue queue, Message message)
 		{
-			var tt = (Transaction.Current != null) ? MessageQueueTransactionType.Automatic : MessageQueueTransactionType.Single;
+			MessageQueueTransactionType tt = (Transaction.Current != null) ? MessageQueueTransactionType.Automatic : MessageQueueTransactionType.Single;
 
 			queue.Send(message, tt);
 		}

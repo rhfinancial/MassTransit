@@ -17,8 +17,9 @@ namespace MassTransit.Transports
     using System.Diagnostics;
     using System.IO;
     using System.Threading;
+    using Context;
 
-    [DebuggerDisplay("{Address}")]
+	[DebuggerDisplay("{Address}")]
     public class LoopbackTransport :
         ITransport
     {
@@ -40,7 +41,7 @@ namespace MassTransit.Transports
 
         public IEndpointAddress Address { get; private set; }
 
-        public void Send(Action<Stream> sender)
+        public void Send(Action<Stream> sender, IMessageContext context)
         {
             if (_disposed) throw NewDisposedException();
 
@@ -69,14 +70,14 @@ namespace MassTransit.Transports
             _messageReady.Set();
         }
 
-        public void Receive(Func<Stream, Action<Stream>> receiver)
+        public void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context)
         {
             if (_disposed) throw NewDisposedException();
 
-            Receive(receiver, TimeSpan.Zero);
+            Receive(receiver, context, TimeSpan.Zero);
         }
 
-        public void Receive(Func<Stream, Action<Stream>> receiver, TimeSpan timeout)
+		public void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context, TimeSpan timeout)
         {
             if (_disposed) throw NewDisposedException();
 
@@ -144,12 +145,6 @@ namespace MassTransit.Transports
                 if (monitorExitNeeded)
                     Monitor.Exit(_messageLock);
             }
-
-          //  lock (_messageLock)
-            //    messageCount = _messages.Count;
-
-            //if (messageCount == 0)
-              //  _messageReady.WaitOne(timeout, true);
         }
 
         private void Dispose(bool disposing)

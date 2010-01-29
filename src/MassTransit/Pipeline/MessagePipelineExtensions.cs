@@ -92,21 +92,21 @@ namespace MassTransit.Pipeline
 			return pipeline.Configure(x => x.Subscribe<TMessage>(getHandler));
 		}
 
-		public static UnsubscribeAction Subscribe<TMessage>(this IMessagePipeline pipeline, IEndpoint endpoint) where TMessage : class
+		public static UnsubscribeAction Subscribe<TMessage>(this IMessagePipeline pipeline, IServiceBus bus, IEndpoint endpoint) where TMessage : class
 		{
-			var sink = new EndpointMessageSink<TMessage>(endpoint);
+			var sink = new EndpointMessageSink<TMessage>(bus, endpoint);
 
 			return pipeline.ConnectToRouter(sink);
 		}
 
-		public static UnsubscribeAction Subscribe<TMessage,TKey>(this IMessagePipeline pipeline, TKey correlationId, IEndpoint endpoint) 
+		public static UnsubscribeAction Subscribe<TMessage,TKey>(this IMessagePipeline pipeline, TKey correlationId, IServiceBus bus, IEndpoint endpoint) 
 			where TMessage : class, CorrelatedBy<TKey>
 		{
 			var correlatedConfigurator = CorrelatedMessageRouterConfigurator.For(pipeline);
 
 			var router = correlatedConfigurator.FindOrCreate<TMessage, TKey>();
 
-			UnsubscribeAction result = router.Connect(correlationId, new EndpointMessageSink<TMessage>(endpoint));
+			UnsubscribeAction result = router.Connect(correlationId, new EndpointMessageSink<TMessage>(bus, endpoint));
 
 			return result;
 		}

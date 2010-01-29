@@ -12,8 +12,45 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Context
 {
+	using System;
+
+	/// <summary>
+	/// The consumer context can be used by message consumers to retrieve out-of-band information
+	/// related to a message
+	/// </summary>
 	public interface IConsumeContext :
 		IMessageContext
 	{
+		/// <summary>
+		/// Send the message to the end of the input queue so that it can be processed again later
+		/// </summary>
+		void RetryLater();
+
+		/// <summary>
+		/// Respond to the current message, sending directly to the ResponseAddress if specified
+		/// otherwise publishing the message
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="message">The message to send in response</param>
+		void Respond<T>(T message)
+			where T : class;
+
+		/// <summary>
+		/// Respond to the current message, sending directly to the ResponseAddress if specified
+		/// otherwise publishing the message
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="message">The message to send in response</param>
+		/// <param name="contextAction">The context action for specifying additional context information</param>
+		void Respond<T>(T message, Action<IPublishContext> contextAction)
+			where T : class;
+
+		/// <summary>
+		/// Sends the message to either the fault address if specified or publishes the fault
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="message"></param>
+		void GenerateFault<T>(T message)
+			where T : class;
 	}
 }

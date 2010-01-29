@@ -17,6 +17,7 @@ namespace MassTransit.Tests.Load
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Threading;
+	using Context;
 	using Magnum;
 	using Magnum.DateTimeExtensions;
 	using Messages;
@@ -31,6 +32,7 @@ namespace MassTransit.Tests.Load
 		private readonly AutoResetEvent _received = new AutoResetEvent(false);
 		private int _responseCount;
 		private int _unknownCommands;
+		private IServiceBus _bus;
 
 		public void Consume(TResponse message)
 		{
@@ -44,7 +46,8 @@ namespace MassTransit.Tests.Load
 
 			instance.ResponseCreatedAt = message.CreatedAt;
 			instance.ResponseReceivedAt = SystemUtil.UtcNow;
-			instance.Worker = CurrentMessage.Headers.SourceAddress;
+			instance.Worker = _bus.ConsumeContext(x => x.SourceAddress);
+
 			Interlocked.Increment(ref _responseCount);
 
 			_received.Set();
@@ -52,6 +55,8 @@ namespace MassTransit.Tests.Load
 
 		public void Run(IServiceBus bus, int iterations, Func<Guid, TRequest> generateRequest)
 		{
+			_bus = bus;
+
 			using (bus.Subscribe(this).Disposable())
 			{
 				ThreadUtil.Sleep(2.Seconds());

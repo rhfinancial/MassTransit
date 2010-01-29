@@ -33,7 +33,7 @@ namespace MassTransit.Tests.Load
 
 			ManualResetEvent completed = new ManualResetEvent(false);
 
-			LocalBus.Subscribe<PingMessage>(x => CurrentMessage.Respond(new PongMessage(x.CorrelationId)));
+			LocalBus.Subscribe<PingMessage>(x => LocalBus.Respond(new PongMessage(x.CorrelationId)));
 			LocalBus.Subscribe<PongMessage>(x =>
 				{
 					if (Interlocked.Increment(ref responsesReceived) == repeatCount)

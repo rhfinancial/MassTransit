@@ -56,21 +56,21 @@ namespace MassTransit.Transports
 
 					if (SpecialLoggers.Messages.IsInfoEnabled)
 						SpecialLoggers.Messages.InfoFormat("SEND:{0}:{1}", Address, typeof (T).Name);
-				});
+				}, context);
 		}
 
 		public override void Receive(Func<object, Action<object>> receiver, IReceiveContext context)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			_transport.Receive(ReceiveFromTransport(receiver, context));
+			_transport.Receive(ReceiveFromTransport(receiver, context), context);
 		}
 
 		public override void Receive(Func<object, Action<object>> receiver, IReceiveContext context, TimeSpan timeout)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			_transport.Receive(ReceiveFromTransport(receiver, context), timeout);
+			_transport.Receive(ReceiveFromTransport(receiver, context), context, timeout);
 		}
 
 		protected override void Dispose(bool disposing)
@@ -105,7 +105,7 @@ namespace MassTransit.Transports
 						if (_log.IsErrorEnabled)
 							_log.Error("Unrecognized message " + Address, sex);
 
-						return MoveMessageToErrorTransport;
+						return x => MoveMessageToErrorTransport(x, context);
 					}
 
 					if (messageObj == null)
@@ -131,7 +131,7 @@ namespace MassTransit.Transports
 						if (_log.IsErrorEnabled)
 							_log.Error("An exception was thrown preparing the message consumers", ex);
 
-						MoveMessageToErrorTransport(message);
+						MoveMessageToErrorTransport(message, context);
 						return null;
 					}
 
@@ -152,13 +152,13 @@ namespace MassTransit.Transports
 								if (_log.IsErrorEnabled)
 									_log.Error("An exception was thrown by a message consumer", ex);
 
-								MoveMessageToErrorTransport(m);
+								MoveMessageToErrorTransport(m, context);
 							}
 						};
 				};
 		}
 
-		private void MoveMessageToErrorTransport(Stream message)
+		private void MoveMessageToErrorTransport(Stream message, IMessageContext context)
 		{
 			_errorTransport.Send(outbound =>
 				{
@@ -167,7 +167,7 @@ namespace MassTransit.Transports
 					message.Read(data, 0, data.Length);
 
 					outbound.Write(data, 0, data.Length);
-				});
+				}, context);
 
 			if (_log.IsDebugEnabled)
 				_log.DebugFormat("MOVE:{0}:{1}", Address, _errorTransport.Address);

@@ -28,7 +28,7 @@ namespace MassTransit.Transports.Msmq.Tests
 		public void Should_invoke_the_continuation()
 		{
 			var transport = MockRepository.GenerateStub<IMsmqTransport>();
-			transport.Stub(x => x.Receive(null))
+			transport.Stub(x => x.Receive(null, null))
 				.Callback(new Func<Func<Message, Action<Message>>, bool>(Forwarder));
 
 			var address = MockRepository.GenerateMock<IMsmqEndpointAddress>();

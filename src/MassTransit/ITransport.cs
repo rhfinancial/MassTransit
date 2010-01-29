@@ -14,16 +14,17 @@ namespace MassTransit
 {
     using System;
     using System.IO;
+    using Context;
 
-    public interface ITransport :
+	public interface ITransport :
         IDisposable
     {
 		IEndpointAddress Address { get; }
 
-        void Send(Action<Stream> sender);
+        void Send(Action<Stream> sender, IMessageContext context);
 
-        void Receive(Func<Stream, Action<Stream>> receiver);
+        void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context);
 
-        void Receive(Func<Stream, Action<Stream>> receiver, TimeSpan timeout);
+        void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context, TimeSpan timeout);
     }
 }

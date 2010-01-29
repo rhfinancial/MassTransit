@@ -17,6 +17,7 @@ namespace MassTransit.Transports.Msmq
 	using System.IO;
 	using System.Messaging;
 	using System.Threading;
+	using Context;
 	using Exceptions;
 	using Internal;
 	using log4net;
@@ -47,14 +48,43 @@ namespace MassTransit.Transports.Msmq
 			get { return _address; }
 		}
 
-		public virtual void Receive(Func<Message, Action<Message>> receiver)
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		public virtual void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			Receive(receiver, TimeSpan.Zero);
+			Receive(receiver, context, TimeSpan.Zero);
 		}
 
-		public virtual void Receive(Func<Message, Action<Message>> receiver, TimeSpan timeout)
+		public virtual void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context, TimeSpan timeout)
+		{
+			if (_disposed) throw NewDisposedException();
+
+			Receive(ReceiveAsStream(receiver), context, timeout);
+		}
+
+		public virtual void Send(Action<Stream> sender, IMessageContext context)
+		{
+			if (_disposed) throw NewDisposedException();
+
+			Action<Message> messageSender = m => sender(m.BodyStream);
+
+			Send(messageSender, context);
+		}
+
+		public virtual void Receive(Func<Message, Action<Message>> receiver, IReceiveContext context)
+		{
+			if (_disposed) throw NewDisposedException();
+
+			Receive(receiver, context, TimeSpan.Zero);
+		}
+
+		public virtual void Receive(Func<Message, Action<Message>> receiver, IReceiveContext context, TimeSpan timeout)
 		{
 			try
 			{
@@ -65,6 +95,31 @@ namespace MassTransit.Transports.Msmq
 			catch (MessageQueueException ex)
 			{
 				HandleMessageQueueException(ex, timeout);
+			}
+		}
+
+		public virtual void Send(Action<Message> sender, IMessageContext context)
+		{
+			if (_disposed) throw NewDisposedException();
+
+			using (var message = new Message())
+			{
+				sender(message);
+
+				try
+				{
+					using (var queue = new MessageQueue(_address.FormatName, QueueAccessMode.Send))
+					{
+						SendMessage(queue, message);
+
+						if (_messageLog.IsDebugEnabled)
+							_messageLog.DebugFormat("SEND:{0}:{1}", Address, message.Id);
+					}
+				}
+				catch (MessageQueueException ex)
+				{
+					HandleMessageQueueException(ex, 2.Seconds());
+				}
 			}
 		}
 
@@ -124,60 +179,6 @@ namespace MassTransit.Transports.Msmq
 			return received;
 		}
 
-		public virtual void Send(Action<Message> sender)
-		{
-			if (_disposed) throw NewDisposedException();
-
-			using (var message = new Message())
-			{
-				sender(message);
-
-				try
-				{
-					using (var queue = new MessageQueue(_address.FormatName, QueueAccessMode.Send))
-					{
-						SendMessage(queue, message);
-
-						if (_messageLog.IsDebugEnabled)
-							_messageLog.DebugFormat("SEND:{0}:{1}", Address, message.Id);
-					}
-				}
-				catch (MessageQueueException ex)
-				{
-					HandleMessageQueueException(ex, 2.Seconds());
-				}
-			}
-		}
-
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		public virtual void Receive(Func<Stream, Action<Stream>> receiver)
-		{
-			if (_disposed) throw NewDisposedException();
-
-			Receive(receiver, TimeSpan.Zero);
-		}
-
-		public virtual void Receive(Func<Stream, Action<Stream>> receiver, TimeSpan timeout)
-		{
-			if (_disposed) throw NewDisposedException();
-
-			Receive(ReceiveAsStream(receiver), timeout);
-		}
-
-		public virtual void Send(Action<Stream> sender)
-		{
-			if (_disposed) throw NewDisposedException();
-
-			Action<Message> messageSender = m => sender(m.BodyStream);
-
-			Send(messageSender);
-		}
-
 		protected virtual void SendMessage(MessageQueue queue, Message message)
 		{
 			queue.Send(message, MessageQueueTransactionType.None);
@@ -199,28 +200,6 @@ namespace MassTransit.Transports.Msmq
 			}
 
 			_disposed = true;
-		}
-
-		private ObjectDisposedException NewDisposedException()
-		{
-			return new ObjectDisposedException("The transport has already been disposed: " + Address);
-		}
-
-		~AbstractMsmqTransport()
-		{
-			Dispose(false);
-		}
-
-		private static Func<Message, Action<Message>> ReceiveAsStream(Func<Stream, Action<Stream>> receiver)
-		{
-			return message =>
-				{
-					Action<Stream> receive = receiver(message.BodyStream);
-					if (receive == null)
-						return null;
-
-					return m => receive(m.BodyStream);
-				};
 		}
 
 		protected void HandleMessageQueueException(MessageQueueException ex, TimeSpan timeout)
@@ -303,6 +282,28 @@ namespace MassTransit.Transports.Msmq
 		{
 			Disconnect();
 			Connect();
+		}
+
+		private ObjectDisposedException NewDisposedException()
+		{
+			return new ObjectDisposedException("The transport has already been disposed: " + Address);
+		}
+
+		~AbstractMsmqTransport()
+		{
+			Dispose(false);
+		}
+
+		private static Func<Message, Action<Message>> ReceiveAsStream(Func<Stream, Action<Stream>> receiver)
+		{
+			return message =>
+				{
+					Action<Stream> receive = receiver(message.BodyStream);
+					if (receive == null)
+						return null;
+
+					return m => receive(m.BodyStream);
+				};
 		}
 	}
 }

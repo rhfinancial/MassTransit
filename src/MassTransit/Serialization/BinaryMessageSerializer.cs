@@ -48,7 +48,7 @@ namespace MassTransit.Serialization
 		{
 			CheckConvention.EnsureSerializable(message);
 
-			_formatter.Serialize(output, message, GetHeaders());
+			_formatter.Serialize(output, message, GetHeaders(context));
 		}
 
 		public object Deserialize(Stream input, IReceiveContext context)
@@ -58,10 +58,8 @@ namespace MassTransit.Serialization
 			return obj;
 		}
 
-		private static Header[] GetHeaders()
+		private static Header[] GetHeaders(IMessageContext context)
 		{
-			var context = OutboundMessage.Headers;
-
 			List<Header> headers = new List<Header>();
 
 			headers.Add(SourceAddressKey, context.SourceAddress);

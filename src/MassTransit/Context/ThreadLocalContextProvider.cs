@@ -59,6 +59,12 @@ namespace MassTransit.Context
 			hashtable[typeof (IPublishContext)] = publishContext;
 			hashtable[typeof(ISendContext)] = publishContext;
 
+			var consumeContext = new ConsumeContext();
+
+			hashtable[typeof(IReceiveContext)] = consumeContext;
+			hashtable[typeof(IConsumeContext)] = consumeContext;
+
+
 			return hashtable;
 		}
 

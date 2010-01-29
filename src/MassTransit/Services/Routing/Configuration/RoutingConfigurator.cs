@@ -42,7 +42,7 @@ namespace MassTransit.Services.Routing.Configuration
                 _boss._routes.Add((bus, ef)=>
                 {
                     var ep = ef.GetEndpoint(address);
-                    return bus.OutboundPipeline.Subscribe<TMessage>(ep);
+                    return bus.OutboundPipeline.Subscribe<TMessage>(bus, ep);
                 });
             }
 

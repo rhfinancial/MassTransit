@@ -14,6 +14,7 @@ namespace MassTransit.Distributor
 {
 	using System;
 	using System.Linq;
+	using Context;
 	using Magnum;
 	using Magnum.Actors.Schedulers;
 	using Magnum.DateTimeExtensions;
@@ -31,6 +32,7 @@ namespace MassTransit.Distributor
 		private ThreadPoolScheduler _threadPoolScheduler;
 		private UnsubscribeAction _unsubscribeAction = () => false;
         private readonly int _pingTimeout = (int)1.Minutes().TotalMilliseconds;
+		private IServiceBus _bus;
 
 		public Distributor(IEndpointFactory endpointFactory, IWorkerSelectionStrategy<T> workerSelectionStrategy)
 		{
@@ -49,7 +51,7 @@ namespace MassTransit.Distributor
 			WorkerDetails worker = _selectionStrategy.GetAvailableWorkers(_workers.Values, message).FirstOrDefault();
 			if (worker == null)
 			{
-				CurrentMessage.RetryLater();
+				_bus.Context<IConsumeContext>(x => x.RetryLater());
 				return;
 			}
 
@@ -57,7 +59,7 @@ namespace MassTransit.Distributor
 
 			IEndpoint endpoint = _endpointFactory.GetEndpoint(worker.DataUri);
 
-			var distributed = new Distributed<T>(message, CurrentMessage.Headers.ResponseAddress);
+			var distributed = new Distributed<T>(message, _bus.ConsumeContext(x => x.ResponseAddress));
 
 			endpoint.Send(distributed);
 		}
@@ -73,6 +75,8 @@ namespace MassTransit.Distributor
 
 		public void Start(IServiceBus bus)
 		{
+			_bus = bus;
+
 			_unsubscribeAction = bus.Subscribe<WorkerAvailable<T>>(Consume);
 
 			// don't plan to unsubscribe this since it's an important thing

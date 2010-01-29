@@ -15,8 +15,9 @@ namespace MassTransit.Transports
     using System;
     using System.Diagnostics;
     using System.IO;
+    using Context;
 
-    [DebuggerDisplay("{Address}")]
+	[DebuggerDisplay("{Address}")]
     public class NullTransport :
         ITransport
     {
@@ -31,15 +32,15 @@ namespace MassTransit.Transports
 
         public IEndpointAddress Address { get; private set; }
 
-        public void Send(Action<Stream> sender)
+		public void Send(Action<Stream> sender, IMessageContext context)
         {
         }
 
-        public void Receive(Func<Stream, Action<Stream>> receiver)
+		public void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context)
         {
         }
 
-        public void Receive(Func<Stream, Action<Stream>> receiver, TimeSpan timeout)
+		public void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context, TimeSpan timeout)
         {
         }
     }

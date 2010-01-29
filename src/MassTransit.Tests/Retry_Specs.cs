@@ -13,6 +13,7 @@
 namespace MassTransit.Tests
 {
     using System;
+    using Context;
     using Magnum.DateTimeExtensions;
 	using Messages;
 	using NUnit.Framework;
@@ -34,15 +35,15 @@ namespace MassTransit.Tests
 				{
 					if(first)
 					{
-						Assert.AreEqual(0, CurrentMessage.Headers.RetryCount);
+						Assert.AreEqual(0, LocalBus.ConsumeContext(x=>x.RetryCount));
 
-						CurrentMessage.RetryLater();
+						LocalBus.ConsumeContext(x => x.RetryLater());
 
 						first = false;
 					}
 					else
 					{
-						Assert.AreEqual(1, CurrentMessage.Headers.RetryCount);
+						Assert.AreEqual(1, LocalBus.ConsumeContext(x => x.RetryCount));
 
 						future.Set(message);
 					}

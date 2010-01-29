@@ -17,6 +17,7 @@ namespace MassTransit.Transports
     using System.IO;
     using System.Net;
     using System.Net.Sockets;
+    using Context;
     using Exceptions;
 
     [DebuggerDisplay("{Address}")]
@@ -44,7 +45,7 @@ namespace MassTransit.Transports
 
         public IEndpointAddress Address { get; private set; }
 
-        public void Send(Action<Stream> sender)
+		public void Send(Action<Stream> sender, IMessageContext context)
         {
             if (_disposed) throw NewDisposedException();
 
@@ -64,14 +65,14 @@ namespace MassTransit.Transports
             }
         }
 
-        public void Receive(Func<Stream, Action<Stream>> receiver)
+		public void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context)
         {
             if (_disposed) throw NewDisposedException();
 
-            Receive(receiver, TimeSpan.Zero);
+            Receive(receiver, context, TimeSpan.Zero);
         }
 
-        public void Receive(Func<Stream, Action<Stream>> receiver, TimeSpan timeout)
+		public void Receive(Func<Stream, Action<Stream>> receiver, IReceiveContext context, TimeSpan timeout)
         {
             if (_disposed) throw NewDisposedException();
 
