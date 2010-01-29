@@ -14,6 +14,7 @@ namespace MassTransit.Distributor
 {
 	using System;
 	using System.Threading;
+	using Context;
 	using Internal;
 	using Magnum.Actors;
 	using Magnum.Actors.CommandQueues;
@@ -63,7 +64,7 @@ namespace MassTransit.Distributor
 			Interlocked.Increment(ref _inProgress);
 			try
 			{
-				RewriteResponseAddress(message.ResponseAddress);
+				_bus.ReceiveContext(x => x.SetResponseAddress(message.ResponseAddress));
 
 				consumer(message.Payload);
 			}
@@ -169,11 +170,6 @@ namespace MassTransit.Distributor
 			_updatePending = false;
 
 			_bus.Publish(new WorkerAvailable<T>(_controlUri, _dataUri, _inProgress, _inProgressLimit, _pendingMessages.PendingMessageCount(), _pendingLimit));
-		}
-
-		private static void RewriteResponseAddress(Uri responseAddress)
-		{
-			InboundMessageHeaders.SetCurrent(x => x.SetResponseAddress(responseAddress));
 		}
 	}
 }

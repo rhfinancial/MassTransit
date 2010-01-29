@@ -43,6 +43,9 @@ namespace MassTransit
 		void Send<T>(T message)
 			where T : class;
 
+		void Send<T>(T message, Action<ISendContext> contextAction)
+			where T : class;
+
 		/// <summary>
 		/// Receive from the endpoint by passing a function that can preview the message and if the caller
 		/// chooses to accept it, return a method that will consume the message.

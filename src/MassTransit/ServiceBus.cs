@@ -158,12 +158,20 @@ namespace MassTransit
 		public void Publish<T>(T message)
 			where T : class
 		{
+			Publish(message, x =>{ });
+		}
+
+		public void Publish<T>(T message, Action<IPublishContext> contextAction)
+			where T : class
+		{
 			Stopwatch publishDuration = Stopwatch.StartNew();
 
 			Context<IPublishContext>(x =>
 				{
 					x.SetSourceAddress(Endpoint.Uri);
 					x.SetMessageType(typeof (T));
+
+					contextAction(x);
 				});
 
 			int publishedCount = 0;
@@ -195,7 +203,7 @@ namespace MassTransit
 					Duration = publishDuration.Elapsed,
 				});
 
-			_contextProvider.Initialize();
+			Context<IPublishContext>(x => x.Initialize());
 		}
 
 		public TService GetService<TService>()

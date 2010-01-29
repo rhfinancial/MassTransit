@@ -15,8 +15,5 @@ namespace MassTransit.Internal
 	public interface ISetInboundMessageHeaders :
 		ISetMessageHeaders
 	{
-		void ReceivedOn(IServiceBus bus);
-		void ReceivedAs(object message);
-		void SetObjectBuilder(IObjectBuilder objectBuilder);
 	}
 }

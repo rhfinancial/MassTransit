@@ -61,7 +61,18 @@ namespace MassTransit.Internal
             _wrappedEndpoint.Send(message);
         }
 
-        public void Receive(Func<object, Action<object>> receiver, IReceiveContext context)
+    	public void Send<T>(T message, Action<ISendContext> contextAction) where T : class
+    	{
+			if (_log.IsWarnEnabled)
+				_log.WarnFormat("Saving Poison Message {0}", message.GetType());
+
+    		var context = new PublishContext();
+    		contextAction(context);
+
+    		_wrappedEndpoint.Send(message, context);
+    	}
+
+    	public void Receive(Func<object, Action<object>> receiver, IReceiveContext context)
         {
             throw new EndpointException(_wrappedEndpoint.Uri, "Receive from poison endpoint is not allowed");
         }

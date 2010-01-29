@@ -37,5 +37,9 @@ namespace MassTransit.Context
 
 		void SetMessageType(Type messageType);
 		void SetMessageType(string messageType);
+
+		void SetBus(IServiceBus bus);
+		void SetMessage(object message);
+		void SetObjectBuilder(IObjectBuilder objectBuilder);
 	}
 }

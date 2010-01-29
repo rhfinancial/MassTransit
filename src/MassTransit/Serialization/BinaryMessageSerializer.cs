@@ -53,7 +53,7 @@ namespace MassTransit.Serialization
 
 		public object Deserialize(Stream input, IReceiveContext context)
 		{
-			object obj = _formatter.Deserialize(input, DeserializeHeaderHandler);
+			object obj = _formatter.Deserialize(input, x => DeserializeHeaderHandler(x, context));
 
 			return obj;
 		}
@@ -76,25 +76,22 @@ namespace MassTransit.Serialization
 			return headers.ToArray();
 		}
 
-		private static object DeserializeHeaderHandler(Header[] headers)
+		private static object DeserializeHeaderHandler(Header[] headers, IReceiveContext context)
 		{
 			if (headers == null)
 				return null;
 
-			InboundMessageHeaders.SetCurrent(context =>
-				{
-					context.Reset();
+			context.Initialize();
 
-					for (int i = 0; i < headers.Length; i++)
-					{
-						MapNameValuePair(context, headers[i]);
-					}
-				});
+			for (int i = 0; i < headers.Length; i++)
+			{
+				MapNameValuePair(context, headers[i]);
+			}
 
 			return null;
 		}
 
-		private static void MapNameValuePair(ISetMessageHeaders context, Header header)
+		private static void MapNameValuePair(IReceiveContext context, Header header)
 		{
 			switch (header.Name)
 			{

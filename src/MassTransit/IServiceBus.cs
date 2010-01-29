@@ -13,6 +13,7 @@
 namespace MassTransit
 {
     using System;
+    using Context;
     using Pipeline;
     using Saga;
 
@@ -94,6 +95,8 @@ namespace MassTransit
         /// <typeparam name="T">The type of the message</typeparam>
         /// <param name="message">The messages to be published</param>
         void Publish<T>(T message) where T : class;
+
+    	void Publish<T>(T message, Action<IPublishContext> contextAction) where T : class;
 
     	/// <summary>
 		/// Returns the service for the requested interface if it was registered with the service bus

@@ -13,6 +13,7 @@
 namespace MassTransit
 {
 	using System;
+	using Context;
 	using Internal;
 	using Magnum.Reflection;
 
@@ -70,7 +71,7 @@ namespace MassTransit
 		/// <typeparam name="T"></typeparam>
 		/// <param name="message">The message to send/publish</param>
 		/// <param name="contextAction">The action to setup the context on the outbound message</param>
-		public static void Respond<T>(T message, Action<IOutboundMessage> contextAction)
+		public static void Respond<T>(T message, Action<IPublishContext> contextAction)
 			where T : class
 		{
 			var context = InboundMessageHeaders.Current;
@@ -80,7 +81,7 @@ namespace MassTransit
 				context.GetResponseEndpoint().Send(message, x =>
 					{
 						x.SetSourceAddress(context.Bus.Endpoint.Uri);
-						contextAction(x);
+						contextAction(x as IPublishContext);
 					});
 			}
 			else

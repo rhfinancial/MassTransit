@@ -46,8 +46,8 @@ namespace MassTransit.Internal
 				{
 					x.SetSourceAddress(SourceAddress);
 					x.SetDestinationAddress(DestinationAddress);
-					x.SendResponseTo(ResponseAddress);
-					x.SendFaultTo(FaultAddress);
+					x.SetResponseAddress(ResponseAddress);
+					x.SetFaultAddress(FaultAddress);
 					x.SetRetryCount(RetryCount + 1);
 
 					if(ExpirationTime.HasValue)

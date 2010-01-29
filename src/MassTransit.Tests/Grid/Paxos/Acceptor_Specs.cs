@@ -1,6 +1,7 @@
 namespace MassTransit.Tests.Grid.Paxos
 {
 	using System;
+	using Context;
 	using MassTransit.Grid.Paxos;
 	using MassTransit.Internal;
 	using NUnit.Framework;
@@ -15,6 +16,7 @@ namespace MassTransit.Tests.Grid.Paxos
 		private IServiceBus _bus;
 		private Guid _serviceId;
 		private Guid _leaderId;
+		private IReceiveContext _receiveContext;
 
 		[SetUp]
 		public void Setup()
@@ -34,6 +36,8 @@ namespace MassTransit.Tests.Grid.Paxos
 
 			_bus = MockRepository.GenerateMock<IServiceBus>();
 			_bus.Stub(x => x.Endpoint).Return(_endpoint);
+
+			_receiveContext = new ConsumeContext();
 		}
 
 		[Test]
@@ -44,12 +48,9 @@ namespace MassTransit.Tests.Grid.Paxos
 				Bus = _bus,
 			};
 
-			InboundMessageHeaders.SetCurrent(x =>
-				{
-					x.ReceivedOn(_bus);
-					x.SetObjectBuilder(_builder);
-					x.SetResponseAddress("loopback://localhost/queue");
-				});
+			_receiveContext.SetBus(_bus);
+			_receiveContext.SetObjectBuilder(_builder);
+			_receiveContext.SetResponseAddress("loopback://localhost/queue");
 
 			Prepare<string> prepare = new Prepare<string>
 				{

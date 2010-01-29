@@ -43,6 +43,11 @@ namespace MassTransit.Internal
 		{
 		}
 
+		public void Send<T>(T message, Action<ISendContext> context) where T : class
+		{
+			
+		}
+
 		public void Receive(Func<object, Action<object>> receiver, IReceiveContext context)
         {
         }

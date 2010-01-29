@@ -95,7 +95,7 @@ namespace MassTransit.Distributor.Configuration
 			var factory = new SagaStateMachineMessageSinkFactory<TSaga, TMessage>(context, _policyFactory);
 			IPipelineSink<TMessage> sink = factory.Create(eevent, states);
 
-			var workerSink = new SagaWorkerMessageSink<TSaga, TMessage>(worker, sink);
+			var workerSink = new SagaWorkerMessageSink<TSaga, TMessage>(worker, sink, context.Data as IServiceBus);
 
 			return context.Pipeline.ConnectToRouter(workerSink, () => context.SubscribedTo<Distributed<TMessage>>());
 		}

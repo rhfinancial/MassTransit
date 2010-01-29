@@ -66,11 +66,11 @@ namespace MassTransit.Internal
 							_log.DebugFormat("Enumerating pipeline on {0} from thread {1}", _bus.Endpoint.Uri, 
 								Thread.CurrentThread.ManagedThreadId);
 
-						InboundMessageHeaders.SetCurrent(context =>
+						_bus.Context<IReceiveContext>(x =>
 							{
-								context.ReceivedOn(_bus);
-								context.SetObjectBuilder(_objectBuilder);
-								context.ReceivedAs(message);
+								x.SetBus(_bus);
+								x.SetMessage(message);
+								x.SetObjectBuilder(_objectBuilder);
 							});
 
 						IEnumerable<Action<object>> enumerable = _bus.InboundPipeline.Enumerate(message);

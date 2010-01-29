@@ -17,6 +17,8 @@ namespace MassTransit.Context
 	public interface IPublishContext :
 		ISendContext
 	{
+		void Initialize();
+
 		void IfNoSubscribers<T>(Action<T> action);
 
 		void ForEachSubscriber<T>(Action<T, IEndpoint> action);
@@ -42,6 +44,5 @@ namespace MassTransit.Context
 		/// <param name="endpointUri"></param>
 		/// <returns></returns>
 		bool WasEndpointAlreadySent(Uri endpointUri);
-
 	}
 }

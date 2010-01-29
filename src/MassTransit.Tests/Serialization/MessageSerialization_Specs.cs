@@ -79,14 +79,11 @@ namespace MassTransit.Tests.Serialization
 
             var serializer = new XmlMessageSerializer();
 
-			OutboundMessage.Set(x =>
-				{
-					x.SetSourceAddress("msmq://localhost/queue_name");
-					x.SetDestinationAddress("msmq://remotehost/queue_name");
-					x.SetResponseAddress("msmq://localhost/response_queue");
-					x.SetFaultAddress("msmq://localhost/fault_queue");
-					x.SetRetryCount(7);
-				});
+			_sendContext.SetSourceAddress("msmq://localhost/queue_name");
+			_sendContext.SetDestinationAddress("msmq://remotehost/queue_name");
+			_sendContext.SetResponseAddress("msmq://localhost/response_queue");
+			_sendContext.SetFaultAddress("msmq://localhost/fault_queue");
+			_sendContext.SetRetryCount(7);
 
             using (MemoryStream output = new MemoryStream())
             {

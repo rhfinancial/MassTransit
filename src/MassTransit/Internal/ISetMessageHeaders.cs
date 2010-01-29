@@ -20,25 +20,5 @@ namespace MassTransit.Internal
 	public interface ISetMessageHeaders :
 		IMessageHeaders
 	{
-		void SetSourceAddress(Uri uri);
-		void SetSourceAddress(string uriString);
-
-		void SetDestinationAddress(Uri uri);
-		void SetDestinationAddress(string uriString);
-
-		void SetResponseAddress(Uri uri);
-		void SetResponseAddress(string uriString);
-
-		void SetFaultAddress(Uri uri);
-		void SetFaultAddress(string uriString);
-
-		void SetRetryCount(int retryCount);
-
-		void SetExpirationTime(DateTime value);
-
-		void SetMessageType(Type messageType);
-		void SetMessageType(string messageType);
-
-		void Reset();
 	}
 }

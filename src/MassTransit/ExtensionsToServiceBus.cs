@@ -66,22 +66,6 @@ namespace MassTransit
 			return new UriBuilder(uri.Scheme, uri.Host, uri.Port, uri.AbsolutePath + value, uri.Query).Uri;
 		}
 
-		public static void Publish<T>(this IServiceBus bus, T message, Action<IOutboundMessage> messageHeaderAction)
-			where T : class
-		{
-			OutboundMessage.Set(messageHeaderAction);
-
-			bus.Publish(message);
-		}
-
-		public static void Send<T>(this IEndpoint endpoint, T message, Action<IOutboundMessage> messageHeaderAction)
-			where T : class
-		{
-			OutboundMessage.Set(messageHeaderAction);
-
-			endpoint.Send(message);
-		}
-
 		public static string ToMessageName(this Type messageType)
 		{
 			string messageName;

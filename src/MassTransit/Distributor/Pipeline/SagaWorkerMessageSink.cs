@@ -14,6 +14,7 @@ namespace MassTransit.Distributor.Pipeline
 {
 	using System;
 	using System.Collections.Generic;
+	using Context;
 	using Internal;
 	using MassTransit.Pipeline;
 	using Messages;
@@ -26,11 +27,13 @@ namespace MassTransit.Distributor.Pipeline
 	{
 		private readonly ISagaWorker<TSaga> _worker;
 		private IPipelineSink<TMessage> _sink;
+		private readonly IServiceBus _bus;
 
-		public SagaWorkerMessageSink(ISagaWorker<TSaga> worker, IPipelineSink<TMessage> sink)
+		public SagaWorkerMessageSink(ISagaWorker<TSaga> worker, IPipelineSink<TMessage> sink, IServiceBus bus)
 		{
 			_worker = worker;
 			_sink = sink;
+			_bus = bus;
 		}
 
 		public void Dispose()
@@ -44,8 +47,8 @@ namespace MassTransit.Distributor.Pipeline
 			if (!_worker.CanAcceptMessage(item))
 				yield break;
 
-			RewriteResponseAddress(item.ResponseAddress);
-
+			_bus.ReceiveContext(x => x.SetResponseAddress(item.ResponseAddress));
+		
 			foreach (var sinkAction in _sink.Enumerate(item.Payload))
 			{
 				Action<TMessage> action = sinkAction;
@@ -70,11 +73,6 @@ namespace MassTransit.Distributor.Pipeline
 		public bool Inspect(IPipelineInspector inspector)
 		{
 			return inspector.Inspect(this, () => _sink.Inspect(inspector));
-		}
-
-		private static void RewriteResponseAddress(Uri responseAddress)
-		{
-			InboundMessageHeaders.SetCurrent(x => x.SetResponseAddress(responseAddress));
 		}
 	}
 }

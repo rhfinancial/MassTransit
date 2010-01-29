@@ -46,6 +46,14 @@ namespace MassTransit.Internal
 			Send(message, new PublishContext());
 		}
 
+		public virtual void Send<T>(T message, Action<ISendContext> contextAction) where T : class
+		{
+			var context = new PublishContext();
+			contextAction(context);
+
+			Send(message, context);
+		}
+
 		public abstract void Send<T>(T message, ISendContext context) where T : class;
 		public abstract void Receive(Func<object, Action<object>> receiver, IReceiveContext context);
 		public abstract void Receive(Func<object, Action<object>> receiver, IReceiveContext context, TimeSpan timeout);
