@@ -64,7 +64,7 @@ namespace MassTransit.Serialization
 			if (obj.GetType() != typeof (XmlReceiveMessageEnvelope))
 				throw new SerializationException("An unknown message type was received: " + obj.GetType().FullName);
 
-			XmlReceiveMessageEnvelope envelope = (XmlReceiveMessageEnvelope) obj;
+			var envelope = (XmlReceiveMessageEnvelope) obj;
 
 			if (string.IsNullOrEmpty(envelope.MessageType))
 				throw new SerializationException("No message type found on envelope");

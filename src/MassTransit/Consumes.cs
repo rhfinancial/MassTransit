@@ -12,6 +12,7 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit
 {
+	using Context;
 	using log4net;
 
 	/// <summary>
@@ -77,6 +78,12 @@ namespace MassTransit
 		public interface Selected : All
 		{
 			bool Accept(TMessage message);
+		}
+
+		// TODO implement this subscriber.
+		public interface WithContext
+		{
+			void Consume(TMessage message, IConsumeContext context);
 		}
 	}
 }

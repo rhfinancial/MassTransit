@@ -21,22 +21,21 @@ namespace MassTransit.Serialization
 	/// </summary>
 	[XmlRoot(ElementName = "MessageEnvelope")]
 	public class XmlMessageEnvelope :
-		MessageEnvelopeBase
+		MessageEnvelope
 	{
 		protected XmlMessageEnvelope()
 		{
 		}
 
-		private XmlMessageEnvelope(Type messageType, object message, ISendContext context)
+		private XmlMessageEnvelope(Type messageType, object message, IMessageContext context)
+			: base(context)
 		{
 			Message = message;
 
 			MessageType = messageType.ToMessageName();
-
-			this.CopyFrom(context);
 		}
 
-		public object Message { get; set; }
+		public object Message { get; private set; }
 
 		public static XmlMessageEnvelope Create<T>(T message, ISendContext context)
 		{

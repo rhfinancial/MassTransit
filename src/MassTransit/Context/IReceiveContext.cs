@@ -14,6 +14,13 @@ namespace MassTransit.Context
 {
 	using System;
 
+	public interface IBusContext :
+		IReceiveContext
+	{
+		void SetBus(IServiceBus bus);
+		void SetObjectBuilder(IObjectBuilder objectBuilder);
+	}
+
 	public interface IReceiveContext :
 		IConsumeContext
 	{
@@ -38,8 +45,8 @@ namespace MassTransit.Context
 		void SetMessageType(Type messageType);
 		void SetMessageType(string messageType);
 
-		void SetBus(IServiceBus bus);
+		void SetEndpoint(IEndpoint endpoint);
+		
 		void SetMessage(object message);
-		void SetObjectBuilder(IObjectBuilder objectBuilder);
 	}
 }

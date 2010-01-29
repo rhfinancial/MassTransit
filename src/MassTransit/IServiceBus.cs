@@ -15,21 +15,8 @@ namespace MassTransit
     using System;
     using Context;
     using Pipeline;
-    using Saga;
 
 	/// <summary>
-	/// The action to call to unsubscribe a previously subscribed consumer
-	/// </summary>
-	/// <returns></returns>
-	public delegate bool UnsubscribeAction();
-
-	/// <summary>
-	/// The action to call to unregister a previously registered component
-	/// </summary>
-	/// <returns></returns>
-	public delegate bool UnregisterAction();
-
-    /// <summary>
     /// The base service bus interface
     /// </summary>
     public interface IServiceBus :
@@ -127,6 +114,4 @@ namespace MassTransit
 
     	IServiceBus ControlBus { get; }
     }
-
-	public delegate Action<T> GetConsumerAction<T>(T message);
 }

@@ -50,24 +50,6 @@ namespace MassTransit.Context
 			}
 		}
 
-		private static Hashtable CreateContext()
-		{
-			var hashtable = new Hashtable();
-
-			var publishContext = new PublishContext();
-
-			hashtable[typeof (IPublishContext)] = publishContext;
-			hashtable[typeof(ISendContext)] = publishContext;
-
-			var consumeContext = new ConsumeContext();
-
-			hashtable[typeof(IReceiveContext)] = consumeContext;
-			hashtable[typeof(IConsumeContext)] = consumeContext;
-
-
-			return hashtable;
-		}
-
 		public void Initialize()
 		{
 			Retrieve<PublishContext>().Initialize();
@@ -90,6 +72,24 @@ namespace MassTransit.Context
 		private TValue Retrieve<TValue>()
 		{
 			return (TValue) ContextCache[typeof (TValue)];
+		}
+
+		private static Hashtable CreateContext()
+		{
+			var hashtable = new Hashtable();
+
+			var publishContext = new PublishContext();
+
+			hashtable[typeof (IPublishContext)] = publishContext;
+			hashtable[typeof (ISendContext)] = publishContext;
+
+			var consumeContext = new ConsumeContext();
+
+			hashtable[typeof (IBusContext)] = consumeContext;
+			hashtable[typeof (IReceiveContext)] = consumeContext;
+			hashtable[typeof (IConsumeContext)] = consumeContext;
+
+			return hashtable;
 		}
 	}
 }

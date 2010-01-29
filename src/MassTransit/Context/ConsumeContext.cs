@@ -17,7 +17,7 @@ namespace MassTransit.Context
 
 	public class ConsumeContext :
 		AbstractMessageContext,
-		IReceiveContext
+		IBusContext
 	{
 		/// <summary>
 		/// The bus on which the message was received
@@ -29,6 +29,12 @@ namespace MassTransit.Context
 		/// </summary>
 		public object Message { get; private set; }
 
+
+		/// <summary>
+		/// The endpoint from which the message was received
+		/// </summary>
+		public IEndpoint Endpoint { get; private set; }
+
 		/// <summary>
 		/// The object builder (container)
 		/// </summary>
@@ -37,6 +43,11 @@ namespace MassTransit.Context
 		public void SetBus(IServiceBus bus)
 		{
 			Bus = bus;
+		}
+
+		public void SetEndpoint(IEndpoint endpoint)
+		{
+			Endpoint = endpoint;
 		}
 
 		public void SetMessage(object message)
@@ -57,7 +68,7 @@ namespace MassTransit.Context
 			if (Message == null)
 				throw new InvalidOperationException("RetryLater can only be called when a message is being consumed");
 
-			this.FastInvoke("RetryLater", Message);
+			this.FastInvoke(x => x.RetryLater(Message), Message);
 		}
 
 		public void Respond<T>(T message) where T : class

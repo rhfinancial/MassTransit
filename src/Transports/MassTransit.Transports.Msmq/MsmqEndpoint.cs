@@ -134,6 +134,9 @@ namespace MassTransit.Transports.Msmq
 					Action<object> receive;
 					try
 					{
+						context.SetMessage(messageObj);
+						context.SetEndpoint(this);
+
 						receive = receiver(messageObj);
 						if (receive == null)
 						{

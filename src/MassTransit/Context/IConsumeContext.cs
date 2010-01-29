@@ -22,6 +22,21 @@ namespace MassTransit.Context
 		IMessageContext
 	{
 		/// <summary>
+		/// The bus on which the message was received
+		/// </summary>
+		IServiceBus Bus { get; }
+
+		/// <summary>
+		/// The message that was received
+		/// </summary>
+		object Message { get; }
+
+		/// <summary>
+		/// The object builder (container)
+		/// </summary>
+		IObjectBuilder Builder { get; }
+
+		/// <summary>
 		/// Send the message to the end of the input queue so that it can be processed again later
 		/// </summary>
 		void RetryLater();

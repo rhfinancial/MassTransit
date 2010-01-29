@@ -60,7 +60,7 @@ namespace MassTransit.Internal
 
 				_receiveTime.Start();
 
-				_bus.Context<IReceiveContext>(context =>
+				_bus.Context<IBusContext>(context =>
 					{
 						_bus.Endpoint.Receive(message =>
 							{
@@ -69,7 +69,6 @@ namespace MassTransit.Internal
 										Thread.CurrentThread.ManagedThreadId);
 
 								context.SetBus(_bus);
-								context.SetMessage(message);
 								context.SetObjectBuilder(_objectBuilder);
 
 								IEnumerable<Action<object>> enumerable = _bus.InboundPipeline.Enumerate(message);

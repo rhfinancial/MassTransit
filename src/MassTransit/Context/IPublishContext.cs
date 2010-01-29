@@ -17,11 +17,26 @@ namespace MassTransit.Context
 	public interface IPublishContext :
 		ISendContext
 	{
+		/// <summary>
+		/// Initializes the property of the publish context to empty
+		/// </summary>
 		void Initialize();
 
+		/// <summary>
+		/// Defines an action to be called if there are no subscribers for the message
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="action"></param>
 		void IfNoSubscribers<T>(Action<T> action);
 
+		/// <summary>
+		/// Defines an action to be called for each subscriber of the message
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="action"></param>
 		void ForEachSubscriber<T>(Action<T, IEndpoint> action);
+
+		// TODO move this into a property bag ,,,,,
 
 		/// <summary>
 		/// Called for each subscriber of the published message

@@ -18,9 +18,7 @@ namespace MassTransit.Serialization
 	using System.Runtime.Remoting.Messaging;
 	using System.Runtime.Serialization.Formatters.Binary;
 	using Context;
-	using Internal;
 	using log4net;
-	using Magnum.ObjectExtensions;
 	using Util;
 
 	/// <summary>
@@ -30,8 +28,6 @@ namespace MassTransit.Serialization
 	public class BinaryMessageSerializer
 		: IMessageSerializer
 	{
-		private static readonly ILog _log = LogManager.GetLogger(typeof (BinaryMessageSerializer));
-
 		private const string ConversationIdKey = "ConversationId";
 		private const string CorrelationIdKey = "CorrelationId";
 		private const string DestinationAddressKey = "DestinationAddress";
@@ -43,6 +39,7 @@ namespace MassTransit.Serialization
 		private const string SourceAddressKey = "SourceAddress";
 
 		private static readonly BinaryFormatter _formatter = new BinaryFormatter();
+		private static readonly ILog _log = LogManager.GetLogger(typeof (BinaryMessageSerializer));
 
 		public void Serialize<T>(Stream output, T message, ISendContext context)
 		{
@@ -60,7 +57,7 @@ namespace MassTransit.Serialization
 
 		private static Header[] GetHeaders(IMessageContext context)
 		{
-			List<Header> headers = new List<Header>();
+			var headers = new List<Header>();
 
 			headers.Add(SourceAddressKey, context.SourceAddress);
 			headers.Add(DestinationAddressKey, context.DestinationAddress);
@@ -94,19 +91,19 @@ namespace MassTransit.Serialization
 			switch (header.Name)
 			{
 				case SourceAddressKey:
-					context.SetSourceAddress(ConvertUriToString(header.Value));
+					context.SetSourceAddress(CastObjectToUri(header.Value));
 					break;
 
 				case ResponseAddressKey:
-					context.SetResponseAddress(ConvertUriToString(header.Value));
+					context.SetResponseAddress(CastObjectToUri(header.Value));
 					break;
 
 				case DestinationAddressKey:
-					context.SetDestinationAddress(ConvertUriToString(header.Value));
+					context.SetDestinationAddress(CastObjectToUri(header.Value));
 					break;
 
 				case FaultAddressKey:
-					context.SetFaultAddress(ConvertUriToString(header.Value));
+					context.SetFaultAddress(CastObjectToUri(header.Value));
 					break;
 
 				case RetryCountKey:
@@ -118,7 +115,7 @@ namespace MassTransit.Serialization
 					break;
 
 				default:
-					if(header.MustUnderstand)
+					if (header.MustUnderstand)
 					{
 						_log.WarnFormat("The header was not understood: " + header.Name);
 					}
@@ -126,15 +123,15 @@ namespace MassTransit.Serialization
 			}
 		}
 
-		public static string ConvertUriToString(object value)
+		private static Uri CastObjectToUri(object value)
 		{
-			if(value == null)
-				return string.Empty;
+			if (value == null)
+				return null;
 
-			if (value.GetType() != typeof(Uri))
-				return string.Empty;
+			if (value.GetType() != typeof (Uri))
+				return null;
 
-			return value.ToString();
+			return (Uri) value;
 		}
 	}
 
@@ -150,7 +147,7 @@ namespace MassTransit.Serialization
 
 		public static void Add(this List<Header> headers, string key, string value)
 		{
-			if (value.IsNullOrEmpty())
+			if (string.IsNullOrEmpty(value))
 				return;
 
 			headers.Add(new Header(key, value));

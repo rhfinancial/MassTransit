@@ -14,7 +14,6 @@ namespace MassTransit.Context
 {
 	using System;
 	using log4net;
-	using Magnum.ObjectExtensions;
 
 	public abstract class AbstractMessageContext
 	{
@@ -27,6 +26,17 @@ namespace MassTransit.Context
 		public int RetryCount { get; private set; }
 		public DateTime? ExpirationTime { get; private set; }
 		public string MessageType { get; private set; }
+
+		public virtual void Initialize()
+		{
+			SourceAddress = null;
+			DestinationAddress = null;
+			ResponseAddress = null;
+			FaultAddress = null;
+			RetryCount = 0;
+			ExpirationTime = null;
+			MessageType = null;
+		}
 
 		public void SetSourceAddress(Uri uri)
 		{
@@ -88,22 +98,11 @@ namespace MassTransit.Context
 			MessageType = messageType;
 		}
 
-		public virtual void Initialize()
-		{
-			SourceAddress = null;
-			DestinationAddress = null;
-			ResponseAddress = null;
-			FaultAddress = null;
-			RetryCount = 0;
-			ExpirationTime = null;
-			MessageType = null;
-		}
-
 		public static Uri ConvertStringToUri(string uriString)
 		{
 			try
 			{
-				return uriString.IsNullOrEmpty() ? null : new Uri(uriString);
+				return string.IsNullOrEmpty(uriString) ? null : new Uri(uriString);
 			}
 			catch (UriFormatException ex)
 			{
