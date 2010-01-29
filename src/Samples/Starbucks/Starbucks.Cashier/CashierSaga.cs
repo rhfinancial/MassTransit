@@ -65,7 +65,7 @@ namespace Starbucks.Cashier
 					Amount = _amount,
 				};
 
-			CurrentMessage.Respond(paymentDueMessage);
+			Bus.Respond(paymentDueMessage);
 		}
 
 	    private void ProcessPayment(SubmitPaymentMessage message)
