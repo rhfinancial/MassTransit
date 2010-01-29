@@ -15,6 +15,7 @@ namespace MassTransit.Tests.Serialization
 	using System;
 	using System.Diagnostics;
 	using System.IO;
+	using Context;
 	using Magnum.DateTimeExtensions;
 	using MassTransit.Serialization;
 	using MassTransit.Serialization.Custom;
@@ -27,6 +28,9 @@ namespace MassTransit.Tests.Serialization
 		[Test, Explicit]
 		public void Just_how_fast_is_the_custom_xml_serializer()
 		{
+			var publishContext = new PublishContext();
+			var receiveContext = new ConsumeContext();
+
 			var message = new SerializationTestMessage
 				{
 					DecimalValue = 123.45m,
@@ -53,7 +57,7 @@ namespace MassTransit.Tests.Serialization
 				byte[] data;
 				using (MemoryStream output = new MemoryStream())
 				{
-					serializer.Serialize(output, message);
+					serializer.Serialize(output, message, publishContext);
 					data = output.ToArray();
 				}
 				using (MemoryStream input = new MemoryStream(data))
@@ -70,7 +74,7 @@ namespace MassTransit.Tests.Serialization
 			{
 				using (MemoryStream output = new MemoryStream())
 				{
-					serializer.Serialize(output, message);
+					serializer.Serialize(output, message, publishContext);
 				}
 			}
 
@@ -84,7 +88,7 @@ namespace MassTransit.Tests.Serialization
 			byte[] sample;
 			using (MemoryStream output = new MemoryStream())
 			{
-				serializer.Serialize(output, message);
+				serializer.Serialize(output, message, publishContext);
 				sample = output.ToArray();
 			}
 
@@ -94,7 +98,7 @@ namespace MassTransit.Tests.Serialization
 			{
 				using (MemoryStream input = new MemoryStream(sample))
 				{
-					serializer.Deserialize(input);
+					serializer.Deserialize(input, receiveContext);
 				}
 			}
 

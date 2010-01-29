@@ -12,8 +12,36 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Context
 {
+	using System;
+
 	public interface IPublishContext :
 		ISendContext
 	{
+		void IfNoSubscribers<T>(Action<T> action);
+
+		void ForEachSubscriber<T>(Action<T, IEndpoint> action);
+
+		/// <summary>
+		/// Called for each subscriber of the published message
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="message"></param>
+		/// <param name="endpoint"></param>
+		void NotifyForMessageConsumer<T>(T message, IEndpoint endpoint);
+
+		/// <summary>
+		/// Called if there are no subscribers for the message
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="message"></param>
+		void NotifyNoSubscribers<T>(T message);
+
+		/// <summary>
+		/// Determines if the endpoint was already sent to during this publish
+		/// </summary>
+		/// <param name="endpointUri"></param>
+		/// <returns></returns>
+		bool WasEndpointAlreadySent(Uri endpointUri);
+
 	}
 }

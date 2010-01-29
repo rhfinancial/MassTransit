@@ -23,7 +23,8 @@ namespace MassTransit.Tests.Serialization
     using NUnit.Framework;
 
     [TestFixture]
-    public class MessageSerialization_Specs
+    public class MessageSerialization_Specs :
+		SerializationSpecificationBase
     {
         [SetUp]
         public void SetupContext()
@@ -56,7 +57,7 @@ namespace MassTransit.Tests.Serialization
 
             using (MemoryStream output = new MemoryStream())
             {
-                serializer.Serialize(output, _message);
+                serializer.Serialize(output, _message, _sendContext);
 
                 serializedMessageData = output.ToArray();
 
@@ -65,7 +66,7 @@ namespace MassTransit.Tests.Serialization
 
             using (MemoryStream input = new MemoryStream(serializedMessageData))
             {
-                SerializationTestMessage receivedMessage = serializer.Deserialize(input) as SerializationTestMessage;
+                SerializationTestMessage receivedMessage = serializer.Deserialize(input, _receiveContext) as SerializationTestMessage;
 
                 Assert.AreEqual(_message, receivedMessage);
             }
@@ -89,7 +90,7 @@ namespace MassTransit.Tests.Serialization
 
             using (MemoryStream output = new MemoryStream())
             {
-                serializer.Serialize(output, _message);
+                serializer.Serialize(output, _message, _sendContext);
 
                 serializedMessageData = output.ToArray();
 
@@ -98,7 +99,7 @@ namespace MassTransit.Tests.Serialization
 
             using (MemoryStream input = new MemoryStream(serializedMessageData))
             {
-                SerializationTestMessage receivedMessage = serializer.Deserialize(input) as SerializationTestMessage;
+                SerializationTestMessage receivedMessage = serializer.Deserialize(input, _receiveContext) as SerializationTestMessage;
 
                 Assert.AreEqual(_message, receivedMessage);
             }
@@ -113,14 +114,14 @@ namespace MassTransit.Tests.Serialization
 
             using (MemoryStream output = new MemoryStream())
             {
-                serializer.Serialize(output, _message);
+                serializer.Serialize(output, _message, _sendContext);
 
                 serializedMessageData = output.ToArray();
             }
 
             using (MemoryStream input = new MemoryStream(serializedMessageData))
             {
-                SerializationTestMessage receivedMessage = serializer.Deserialize(input) as SerializationTestMessage;
+                SerializationTestMessage receivedMessage = serializer.Deserialize(input, _receiveContext) as SerializationTestMessage;
 
                 Assert.AreEqual(_message, receivedMessage);
             }

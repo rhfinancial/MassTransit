@@ -142,9 +142,9 @@
     <Compile Include="Actors\InMemoryActorRepository.cs" />
     <Compile Include="Actors\StateDrivenActor.cs" />
     <Compile Include="Context\AbstractMessageContext.cs" />
-    <Compile Include="Context\ConsumerContext.cs" />
+    <Compile Include="Context\ConsumeContext.cs" />
     <Compile Include="Context\ContextExtensions.cs" />
-    <Compile Include="Context\IConsumerContext.cs" />
+    <Compile Include="Context\IConsumeContext.cs" />
     <Compile Include="Context\IMessageContext.cs" />
     <Compile Include="Context\IPublishContext.cs" />
     <Compile Include="Context\ISendContext.cs" />

@@ -14,6 +14,7 @@ namespace MassTransit.Internal
 {
     using System;
     using System.Diagnostics;
+    using Context;
     using Exceptions;
     using log4net;
 
@@ -44,6 +45,14 @@ namespace MassTransit.Internal
             get { return _wrappedEndpoint.Uri; }
         }
 
+        public void Send<T>(T message, ISendContext context) where T : class
+        {
+            if (_log.IsWarnEnabled)
+                _log.WarnFormat("Saving Poison Message {0}", message.GetType());
+
+            _wrappedEndpoint.Send(message, context);
+        }
+
         public void Send<T>(T message) where T : class
         {
             if (_log.IsWarnEnabled)
@@ -52,12 +61,12 @@ namespace MassTransit.Internal
             _wrappedEndpoint.Send(message);
         }
 
-        public void Receive(Func<object, Action<object>> receiver)
+        public void Receive(Func<object, Action<object>> receiver, IReceiveContext context)
         {
             throw new EndpointException(_wrappedEndpoint.Uri, "Receive from poison endpoint is not allowed");
         }
 
-        public void Receive(Func<object, Action<object>> receiver, TimeSpan timeout)
+		public void Receive(Func<object, Action<object>> receiver, IReceiveContext context, TimeSpan timeout)
         {
             throw new EndpointException(_wrappedEndpoint.Uri, "Receive from poison endpoint is not allowed");
         }

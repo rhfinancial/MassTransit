@@ -13,6 +13,7 @@
 namespace MassTransit.Transports.Msmq.Tests
 {
 	using System.Transactions;
+	using Context;
 	using Magnum.Actors;
 	using MassTransit.Tests;
 	using NUnit.Framework;
@@ -80,7 +81,7 @@ namespace MassTransit.Transports.Msmq.Tests
 
 			using (TransactionScope transaction = new TransactionScope())
 			{
-				Endpoint.Receive(message => m => { future.Complete(m as DeleteMessage); });
+				Endpoint.Receive(message => m => { future.Complete(m as DeleteMessage); }, new ConsumeContext());
 
 				transaction.Complete();
 			}
@@ -96,7 +97,7 @@ namespace MassTransit.Transports.Msmq.Tests
 
 			using (TransactionScope transaction = new TransactionScope())
 			{
-				Endpoint.Receive(message => m => { future.Complete(m as DeleteMessage); });
+				Endpoint.Receive(message => m => { future.Complete(m as DeleteMessage); }, new ConsumeContext());
 
 				// do not complete the transaction (implicit rollback)
 			}

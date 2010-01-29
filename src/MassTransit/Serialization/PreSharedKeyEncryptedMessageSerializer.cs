@@ -15,6 +15,7 @@ namespace MassTransit.Serialization
     using System;
     using System.IO;
     using System.Runtime.Serialization;
+    using Context;
     using log4net;
     using Magnum.Cryptography;
 
@@ -31,13 +32,13 @@ namespace MassTransit.Serialization
             _xmlSerializer = new XmlMessageSerializer();
         }
 
-        public void Serialize<T>(Stream output, T message)
+        public void Serialize<T>(Stream output, T message, ISendContext context)
         {
             try
             {
                 using (var clearStream = new MemoryStream())
                 {
-                    _xmlSerializer.Serialize(clearStream, message);
+                    _xmlSerializer.Serialize(clearStream, message, context);
 
                     clearStream.Seek(0, SeekOrigin.Begin);
 
@@ -51,7 +52,7 @@ namespace MassTransit.Serialization
                                 Iv = Convert.ToBase64String(encryptedStream.Iv),
                             };
 
-                        _xmlSerializer.Serialize(output, encryptedMessage);
+                        _xmlSerializer.Serialize(output, encryptedMessage, context);
                     }
                 }
             }
@@ -65,9 +66,9 @@ namespace MassTransit.Serialization
             }
         }
 
-        public object Deserialize(Stream input)
+        public object Deserialize(Stream input, IReceiveContext context)
         {
-            object message = _xmlSerializer.Deserialize(input);
+            object message = _xmlSerializer.Deserialize(input, context);
             if (message == null)
                 throw new SerializationException("Could not deserialize message.");
 
@@ -83,7 +84,7 @@ namespace MassTransit.Serialization
                 {
                     var clearStream = cryptographyService.Decrypt(cipherStream);
 
-                    return _xmlSerializer.Deserialize(clearStream);
+                    return _xmlSerializer.Deserialize(clearStream, context);
                 }
             }
             return message;

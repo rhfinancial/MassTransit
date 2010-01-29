@@ -13,36 +13,33 @@
 namespace MassTransit.Serialization
 {
 	using System;
-	using Internal;
+	using Context;
 
 	public static class ExtensionsToMessageEnvelope
 	{
-		public static Action<ISetInboundMessageHeaders> GetMessageHeadersSetAction(this MessageEnvelopeBase envelope)
+		public static void SetReceiveContext(this MessageEnvelopeBase envelope, IReceiveContext context)
 		{
-			return headers =>
-				{
-					headers.Reset();
-					headers.SetSourceAddress(envelope.SourceAddress);
-					headers.SetDestinationAddress(envelope.DestinationAddress);
-					headers.SetResponseAddress(envelope.ResponseAddress);
-					headers.SetFaultAddress(envelope.FaultAddress);
-					headers.SetRetryCount(envelope.RetryCount);
-					headers.SetMessageType(envelope.MessageType);
-					if(envelope.ExpirationTime.HasValue)
-						headers.SetExpirationTime(envelope.ExpirationTime.Value);
-				};
+			context.Initialize();
+			context.SetSourceAddress(envelope.SourceAddress);
+			context.SetDestinationAddress(envelope.DestinationAddress);
+			context.SetResponseAddress(envelope.ResponseAddress);
+			context.SetFaultAddress(envelope.FaultAddress);
+			context.SetRetryCount(envelope.RetryCount);
+			context.SetMessageType(envelope.MessageType);
+			if (envelope.ExpirationTime.HasValue)
+				context.SetExpirationTime(envelope.ExpirationTime.Value);
 		}
 
-		public static void CopyFrom(this MessageEnvelopeBase envelope, IMessageHeaders headers)
+		public static void CopyFrom(this MessageEnvelopeBase envelope, ISendContext context)
 		{
-			envelope.SourceAddress = headers.SourceAddress.ToStringOrNull() ?? envelope.SourceAddress;
-			envelope.DestinationAddress = headers.DestinationAddress.ToStringOrNull() ?? envelope.DestinationAddress;
-			envelope.ResponseAddress = headers.ResponseAddress.ToStringOrNull() ?? envelope.ResponseAddress;
-			envelope.FaultAddress = headers.FaultAddress.ToStringOrNull() ?? envelope.FaultAddress;
-			envelope.RetryCount = headers.RetryCount;
-			envelope.MessageType = headers.MessageType ?? envelope.MessageType;
-			if(headers.ExpirationTime.HasValue)
-				envelope.ExpirationTime = headers.ExpirationTime.Value;
+			envelope.SourceAddress = context.SourceAddress.ToStringOrNull() ?? envelope.SourceAddress;
+			envelope.DestinationAddress = context.DestinationAddress.ToStringOrNull() ?? envelope.DestinationAddress;
+			envelope.ResponseAddress = context.ResponseAddress.ToStringOrNull() ?? envelope.ResponseAddress;
+			envelope.FaultAddress = context.FaultAddress.ToStringOrNull() ?? envelope.FaultAddress;
+			envelope.RetryCount = context.RetryCount;
+			envelope.MessageType = context.MessageType ?? envelope.MessageType;
+			if (context.ExpirationTime.HasValue)
+				envelope.ExpirationTime = context.ExpirationTime.Value;
 		}
 
 		public static string ToStringOrNull(this Uri uri)

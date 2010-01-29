@@ -13,6 +13,7 @@
 namespace MassTransit.Tests
 {
 	using System;
+	using Context;
 	using Magnum.Actors;
 	using NUnit.Framework;
 
@@ -34,7 +35,7 @@ namespace MassTransit.Tests
 					future.Complete(tm);
 
 					return null;
-				});
+				}, new ConsumeContext());
 
 			future.IsAvailable().ShouldBeTrue(endpoint.Address + " should contain a message of type " + typeof (TMessage).Name);
 		}
@@ -63,7 +64,7 @@ namespace MassTransit.Tests
 	                future.Complete(tm);
 
 	                return null;
-	            }, timeout);
+				}, new ConsumeContext(), timeout);
 
 			future.IsAvailable().ShouldBeTrue(endpoint.Address + " should contain a message of type " + typeof (TMessage).Name + " with correlation id " + expectedMessage.CorrelationId);
 		}
@@ -81,7 +82,7 @@ namespace MassTransit.Tests
 					}
 
 					return null;
-				});
+				}, new ConsumeContext());
 		}
 
 		public static void ShouldNotContain<TMessage>(this IEndpoint endpoint, TMessage expectedMessage)
@@ -102,7 +103,7 @@ namespace MassTransit.Tests
 					Assert.Fail(endpoint.Address + " should not contain a message of type " + typeof (TMessage).Name + " with correlation id " + expectedMessage.CorrelationId);
 
 					return null;
-				});
+				}, new ConsumeContext());
 		}
 	}
 }

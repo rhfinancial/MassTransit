@@ -17,6 +17,7 @@ namespace MassTransit.Serialization
 	using System.Runtime.Serialization;
 	using System.Xml;
 	using System.Xml.Serialization;
+	using Context;
 	using Internal;
 	using Magnum.Threading;
 	using Util;
@@ -49,15 +50,15 @@ namespace MassTransit.Serialization
 			_attributes.XmlRoot = new XmlRootAttribute("Message");
 		}
 
-		public void Serialize<T>(Stream output, T message)
+		public void Serialize<T>(Stream output, T message, ISendContext context)
 		{
 			CheckConvention.EnsureSerializable(message);
-			var envelope = XmlMessageEnvelope.Create(message);
+			var envelope = XmlMessageEnvelope.Create(message, context);
 
 			GetSerializerFor<T>().Serialize(output, envelope);
 		}
 
-		public object Deserialize(Stream input)
+		public object Deserialize(Stream input, IReceiveContext context)
 		{
 			object obj = GetDeserializerFor(typeof (XmlReceiveMessageEnvelope)).Deserialize(input);
 			if (obj.GetType() != typeof (XmlReceiveMessageEnvelope))
@@ -75,7 +76,7 @@ namespace MassTransit.Serialization
 				obj = GetDeserializerFor(t).Deserialize(reader);
 			}
 
-			InboundMessageHeaders.SetCurrent(envelope.GetMessageHeadersSetAction());
+			envelope.SetReceiveContext(context);
 
 			return obj;
 		}

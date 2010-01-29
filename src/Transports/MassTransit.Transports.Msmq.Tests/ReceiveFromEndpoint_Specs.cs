@@ -15,6 +15,7 @@ namespace MassTransit.Transports.Msmq.Tests
 	using System;
 	using System.IO;
 	using System.Messaging;
+	using Context;
 	using Magnum.Actors;
 	using MassTransit.Serialization;
 	using NUnit.Framework;
@@ -44,7 +45,7 @@ namespace MassTransit.Transports.Msmq.Tests
 			                 		Assert.AreEqual(((SimpleMessage) message).Name, "Chris");
 
 			                 		future.Complete(message);
-			                 	});
+								}, new ConsumeContext());
 
 			Assert.IsTrue(future.IsAvailable(), "Receive was not called");
 		}
@@ -66,7 +67,7 @@ namespace MassTransit.Transports.Msmq.Tests
 		private Message CreateSimpleMessage()
 		{
 			var message = new Message();
-			new XmlMessageSerializer().Serialize(message.BodyStream, new SimpleMessage {Name = "Chris"});
+			new XmlMessageSerializer().Serialize(message.BodyStream, new SimpleMessage {Name = "Chris"}, new PublishContext());
 			message.BodyStream.Seek(0, SeekOrigin.Begin);
 
 			return message;

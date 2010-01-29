@@ -20,7 +20,8 @@ namespace MassTransit.Tests.Serialization
 	using MassTransit.Serialization;
 	using NUnit.Framework;
 
-	public class SerializationSpecificationBase
+	public class SerializationSpecificationBase :
+		SerializationTest
 	{
 		private Uri _sourceUri;
 		private Uri _responseUri;
@@ -39,40 +40,32 @@ namespace MassTransit.Tests.Serialization
 			_destinationUri = new Uri("loopback://localhost/destination");
 			_retryCount = 69;
 
-			OutboundMessage.Set(x =>
-				{
-					x.SetSourceAddress(_sourceUri);
-					x.SendResponseTo(_responseUri);
-					x.SendFaultTo(_faultUri);
-					x.SetDestinationAddress(_destinationUri);
-					x.SetRetryCount(_retryCount);
-				});
+			_sendContext.SetSourceAddress(_sourceUri);
+			_sendContext.SendResponseTo(_responseUri);
+			_sendContext.SendFaultTo(_faultUri);
+			_sendContext.SetDestinationAddress(_destinationUri);
+			_sendContext.SetRetryCount(_retryCount);
 
 			using (MemoryStream output = new MemoryStream())
 			{
-				serializer.Serialize(output, message);
+				serializer.Serialize(output, message, _sendContext);
 
 				data = output.ToArray();
 			}
 
-			Trace.WriteLine(OutboundMessage.Headers.MessageType);
-
-			Trace.WriteLine(Encoding.UTF8.GetString(data));
-
 			using (MemoryStream input = new MemoryStream(data))
 			{
-				object receivedMessage = serializer.Deserialize(input);
+				object receivedMessage = serializer.Deserialize(input, _receiveContext);
 
 				Assert.AreEqual(message, receivedMessage);
 				Assert.AreNotSame(message, receivedMessage);
 
-				Assert.AreEqual(_retryCount, CurrentMessage.Headers.RetryCount);
-				Assert.AreEqual(_sourceUri, CurrentMessage.Headers.SourceAddress);
-				Assert.AreEqual(_responseUri, CurrentMessage.Headers.ResponseAddress);
-				Assert.AreEqual(_faultUri, CurrentMessage.Headers.FaultAddress);
-				Assert.AreEqual(_destinationUri, CurrentMessage.Headers.DestinationAddress);
-	//			Assert.AreEqual(message.GetType().ToMessageName(), CurrentMessage.Headers.MessageType);
-
+				Assert.AreEqual(_retryCount, _receiveContext.RetryCount);
+				Assert.AreEqual(_sourceUri, _receiveContext.SourceAddress);
+				Assert.AreEqual(_responseUri, _receiveContext.ResponseAddress);
+				Assert.AreEqual(_faultUri, _receiveContext.FaultAddress);
+				Assert.AreEqual(_destinationUri, _receiveContext.DestinationAddress);
+				Assert.AreEqual(message.GetType().ToMessageName(), _receiveContext.MessageType);
 			}
 		}
 	}

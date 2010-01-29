@@ -13,6 +13,7 @@
 namespace MassTransit.Internal
 {
 	using System;
+	using Context;
 	using Serialization;
 
 	public abstract class AbstractEndpoint :
@@ -40,9 +41,14 @@ namespace MassTransit.Internal
 			get { return Address.Uri; }
 		}
 
-		public abstract void Send<T>(T message) where T : class;
-		public abstract void Receive(Func<object, Action<object>> receiver);
-		public abstract void Receive(Func<object, Action<object>> receiver, TimeSpan timeout);
+		public virtual void Send<T>(T message) where T : class
+		{
+			Send(message, new PublishContext());
+		}
+
+		public abstract void Send<T>(T message, ISendContext context) where T : class;
+		public abstract void Receive(Func<object, Action<object>> receiver, IReceiveContext context);
+		public abstract void Receive(Func<object, Action<object>> receiver, IReceiveContext context, TimeSpan timeout);
 
 		public void Dispose()
 		{
@@ -60,13 +66,10 @@ namespace MassTransit.Internal
 			return new ObjectDisposedException(_disposedMessage);
 		}
 
-		protected void SetOutboundMessageHeaders<T>()
+		protected void SetOutboundMessageHeaders<T>(ISendContext context)
 		{
-			OutboundMessage.Set(headers =>
-				{
-					headers.SetMessageType(typeof (T));
-					headers.SetDestinationAddress(Uri);
-				});
+			context.SetMessageType(typeof (T));
+			context.SetDestinationAddress(Uri);
 		}
 
 		protected virtual void Dispose(bool disposing)

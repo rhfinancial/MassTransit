@@ -14,7 +14,7 @@ namespace MassTransit.Serialization
 {
 	using System;
 	using System.Xml.Serialization;
-	using Internal;
+	using Context;
 
 	/// <summary>
 	/// The envelope that is used to wrap messages serialized using Xml
@@ -27,20 +27,20 @@ namespace MassTransit.Serialization
 		{
 		}
 
-		private XmlMessageEnvelope(Type messageType, object message)
+		private XmlMessageEnvelope(Type messageType, object message, ISendContext context)
 		{
 			Message = message;
 
 			MessageType = messageType.ToMessageName();
 
-			this.CopyFrom(OutboundMessage.Headers);
+			this.CopyFrom(context);
 		}
 
 		public object Message { get; set; }
 
-		public static XmlMessageEnvelope Create<T>(T message)
+		public static XmlMessageEnvelope Create<T>(T message, ISendContext context)
 		{
-			return new XmlMessageEnvelope(typeof (T), message);
+			return new XmlMessageEnvelope(typeof (T), message, context);
 		}
 	}
 }

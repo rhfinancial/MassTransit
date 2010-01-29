@@ -12,64 +12,65 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Tests.Serialization
 {
-    using System;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Text;
-    using Magnum.Cryptography;
-    using Magnum.DateTimeExtensions;
-    using MassTransit.Serialization;
-    using Messages;
-    using NUnit.Framework;
+	using System;
+	using System.Diagnostics;
+	using System.IO;
+	using System.Text;
+	using Magnum.DateTimeExtensions;
+	using MassTransit.Serialization;
+	using Messages;
+	using NUnit.Framework;
 
-    [TestFixture]
-    public class PreSharedKeyEncryptedSerialization_Specs
-    {
-        [SetUp]
-        public void SetupContext()
-        {
-            _message = new SerializationTestMessage
-                       {
-                           DecimalValue = 123.45m,
-                           LongValue = 098123213,
-                           BoolValue = true,
-                           ByteValue = 127,
-                           IntValue = 123,
-                           DateTimeValue = new DateTime(2008, 9, 8, 7, 6, 5, 4),
-                           TimeSpanValue = 30.Seconds(),
-                           GuidValue = new Guid("B00C3BD0-3CE9-4B14-9EC6-E7348084EF1F"),
-                           StringValue = "Chris's Sample Code",
-                           DoubleValue = 1823.172,
-                       };
-        }
+	[TestFixture]
+	public class PreSharedKeyEncryptedSerialization_Specs :
+		SerializationSpecificationBase
 
-        private SerializationTestMessage _message;
+	{
+		[SetUp]
+		public void SetupContext()
+		{
+			_message = new SerializationTestMessage
+				{
+					DecimalValue = 123.45m,
+					LongValue = 098123213,
+					BoolValue = true,
+					ByteValue = 127,
+					IntValue = 123,
+					DateTimeValue = new DateTime(2008, 9, 8, 7, 6, 5, 4),
+					TimeSpanValue = 30.Seconds(),
+					GuidValue = new Guid("B00C3BD0-3CE9-4B14-9EC6-E7348084EF1F"),
+					StringValue = "Chris's Sample Code",
+					DoubleValue = 1823.172,
+				};
+		}
 
-        [Test, Explicit]
-        public void The_encrypted_serializer_should_be_awesome()
-        {
-            byte[] serializedMessageData;
-            string key = "eguhidbehumjdemy1234567890123456";
+		private SerializationTestMessage _message;
 
-            var serializer = new PreSharedKeyEncryptedMessageSerializer(key);
+		[Test, Explicit]
+		public void The_encrypted_serializer_should_be_awesome()
+		{
+			byte[] serializedMessageData;
+			string key = "eguhidbehumjdemy1234567890123456";
 
-            using (var output = new MemoryStream())
-            {
-                serializer.Serialize(output, _message);
+			var serializer = new PreSharedKeyEncryptedMessageSerializer(key);
 
-                serializedMessageData = output.ToArray();
+			using (var output = new MemoryStream())
+			{
+				serializer.Serialize(output, _message, _sendContext);
 
-                Trace.WriteLine(Encoding.UTF8.GetString(serializedMessageData));
-            }
+				serializedMessageData = output.ToArray();
 
-            var deserializer = new PreSharedKeyEncryptedMessageSerializer(key);
+				Trace.WriteLine(Encoding.UTF8.GetString(serializedMessageData));
+			}
 
-            using (var input = new MemoryStream(serializedMessageData))
-            {
-                var receivedMessage = deserializer.Deserialize(input) as SerializationTestMessage;
+			var deserializer = new PreSharedKeyEncryptedMessageSerializer(key);
 
-                Assert.AreEqual(_message, receivedMessage);
-            }
-        }
-    }
+			using (var input = new MemoryStream(serializedMessageData))
+			{
+				var receivedMessage = deserializer.Deserialize(input, _receiveContext) as SerializationTestMessage;
+
+				Assert.AreEqual(_message, receivedMessage);
+			}
+		}
+	}
 }

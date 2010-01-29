@@ -12,8 +12,30 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Context
 {
+	using System;
+
 	public interface IReceiveContext :
-		IMessageContext
+		IConsumeContext
 	{
+		void Initialize();
+
+		void SetSourceAddress(Uri uri);
+		void SetSourceAddress(string uriString);
+
+		void SetDestinationAddress(Uri uri);
+		void SetDestinationAddress(string uriString);
+
+		void SetResponseAddress(Uri uri);
+		void SetResponseAddress(string uriString);
+
+		void SetFaultAddress(Uri uri);
+		void SetFaultAddress(string uriString);
+
+		void SetRetryCount(int retryCount);
+
+		void SetExpirationTime(DateTime value);
+
+		void SetMessageType(Type messageType);
+		void SetMessageType(string messageType);
 	}
 }

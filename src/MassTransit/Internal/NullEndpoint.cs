@@ -14,8 +14,9 @@ namespace MassTransit.Internal
 {
     using System;
     using System.Diagnostics;
+    using Context;
 
-    [DebuggerDisplay("{Uri}")]
+	[DebuggerDisplay("{Uri}")]
     public class NullEndpoint :
         IEndpoint
     {
@@ -34,15 +35,19 @@ namespace MassTransit.Internal
             get { return new Uri("null://middleof/nowhere"); }
         }
 
-        public void Send<T>(T message) where T : class
+        public void Send<T>(T message, ISendContext context) where T : class
         {
         }
 
-        public void Receive(Func<object, Action<object>> receiver)
+		public void Send<T>(T message) where T : class
+		{
+		}
+
+		public void Receive(Func<object, Action<object>> receiver, IReceiveContext context)
         {
         }
 
-        public void Receive(Func<object, Action<object>> receiver, TimeSpan timeout)
+		public void Receive(Func<object, Action<object>> receiver, IReceiveContext context, TimeSpan timeout)
         {
         }
     }

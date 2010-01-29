@@ -17,6 +17,7 @@ namespace MassTransit.Transports.Msmq
 	using System.Messaging;
 	using System.Runtime.Serialization;
 	using Configuration;
+	using Context;
 	using Internal;
 	using log4net;
 	using Serialization;
@@ -45,28 +46,32 @@ namespace MassTransit.Transports.Msmq
 
 		public override void Send<T>(T message)
 		{
+			Send(message, new PublishContext());
+		}
+    	public override void Send<T>(T message, ISendContext context)
+		{
 			if (_disposed) throw NewDisposedException();
 
 			_transport.Send(msg =>
 				{
-					SetOutboundMessageHeaders<T>();
+					SetOutboundMessageHeaders<T>(context);
 
-					PopulateTransportMessage(msg, message);
+					PopulateTransportMessage(msg, message, context);
                 });
 		}
 
-		public override void Receive(Func<object, Action<object>> receiver)
+		public override void Receive(Func<object, Action<object>> receiver, IReceiveContext context)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			_transport.Receive(ReceiveFromTransport(receiver));
+			_transport.Receive(ReceiveFromTransport(receiver, context));
 		}
 
-		public override void Receive(Func<object, Action<object>> receiver, TimeSpan timeout)
+		public override void Receive(Func<object, Action<object>> receiver, IReceiveContext context, TimeSpan timeout)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			_transport.Receive(ReceiveFromTransport(receiver), timeout);
+			_transport.Receive(ReceiveFromTransport(receiver, context), timeout);
 		}
 
 		protected override void Dispose(bool disposing)
@@ -86,16 +91,16 @@ namespace MassTransit.Transports.Msmq
 			_disposed = true;
 		}
 
-		private void PopulateTransportMessage<T>(Message transportMessage, T message)
+		private void PopulateTransportMessage<T>(Message transportMessage, T message, ISendContext context)
 		{
-			Serializer.Serialize(transportMessage.BodyStream, message);
+			Serializer.Serialize(transportMessage.BodyStream, message, context);
 
 			transportMessage.Label = typeof (T).Name;
 
 			transportMessage.Recoverable = true;
 		}
 
-		private Func<Message, Action<Message>> ReceiveFromTransport(Func<object, Action<object>> receiver)
+		private Func<Message, Action<Message>> ReceiveFromTransport(Func<object, Action<object>> receiver, IReceiveContext context)
 		{
 			return message =>
 				{
@@ -104,14 +109,14 @@ namespace MassTransit.Transports.Msmq
 						if(_log.IsErrorEnabled)
 							_log.ErrorFormat("Message retry limit exceeded {0}:{1}", Address, message.Id);
 
-						return MoveMessageToErrorTransport;
+						return x => MoveMessageToErrorTransport(x, context);
 					}
 
 					object messageObj;
 
 					try
 					{
-						messageObj = Serializer.Deserialize(message.BodyStream);
+						messageObj = Serializer.Deserialize(message.BodyStream, context);
 					}
 					catch (SerializationException sex)
 					{
@@ -119,7 +124,7 @@ namespace MassTransit.Transports.Msmq
                             _log.Error("Unrecognized message " + Address + ":" + message.Id, sex);
 
 						_tracker.IncrementRetryCount(message.Id);
-                        return MoveMessageToErrorTransport;
+						return x => MoveMessageToErrorTransport(x, context);
 					}
 
 					if (messageObj == null)
@@ -169,19 +174,19 @@ namespace MassTransit.Transports.Msmq
 									_log.Error("An exception was thrown by a message consumer", ex);
 
 								_tracker.IncrementRetryCount(message.Id);
-								MoveMessageToErrorTransport(m);
+								MoveMessageToErrorTransport(m, context);
 							}
 					    };
 				};
 		}
 
-	    private void MoveMessageToErrorTransport(Message message)
+	    private void MoveMessageToErrorTransport(Message message, IMessageContext context)
 	    {
 	        _errorTransport.Send(outbound =>
 	        	{
 	        		outbound.BodyStream = message.BodyStream;
 
-	        		SetMessageExpiration(outbound);
+	        		SetMessageExpiration(outbound, context);
 	        	});
 
 	        if (_log.IsDebugEnabled)
@@ -191,9 +196,9 @@ namespace MassTransit.Transports.Msmq
 	            SpecialLoggers.Messages.InfoFormat("MOVE:{0}:{1}:{2}", Address, _errorTransport.Address, message.Id);
 	    }
 
-    	private static void SetMessageExpiration(Message outbound)
+    	private static void SetMessageExpiration(Message outbound, IMessageContext context)
     	{
-    		if (OutboundMessage.Headers.ExpirationTime.HasValue)
+			if (context.ExpirationTime.HasValue)
     		{
     			outbound.TimeToBeReceived = OutboundMessage.Headers.ExpirationTime.Value - DateTime.UtcNow;
     		}

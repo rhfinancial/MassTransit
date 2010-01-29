@@ -15,6 +15,7 @@ namespace MassTransit.Transports
 	using System;
 	using System.IO;
 	using System.Runtime.Serialization;
+	using Context;
 	using Internal;
 	using log4net;
 	using Serialization;
@@ -40,29 +41,36 @@ namespace MassTransit.Transports
 		{
 			if (_disposed) throw NewDisposedException();
 
+			Send(message, new PublishContext());
+		}
+
+		public override void Send<T>(T message, ISendContext context)
+		{
+			if (_disposed) throw NewDisposedException();
+
 			_transport.Send(msg =>
 				{
-					SetOutboundMessageHeaders<T>();
+					SetOutboundMessageHeaders<T>(context);
 
-					PopulateTransportMessage(msg, message);
+					Serializer.Serialize(msg, message, context);
 
 					if (SpecialLoggers.Messages.IsInfoEnabled)
 						SpecialLoggers.Messages.InfoFormat("SEND:{0}:{1}", Address, typeof (T).Name);
 				});
 		}
 
-		public override void Receive(Func<object, Action<object>> receiver)
+		public override void Receive(Func<object, Action<object>> receiver, IReceiveContext context)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			_transport.Receive(ReceiveFromTransport(receiver));
+			_transport.Receive(ReceiveFromTransport(receiver, context));
 		}
 
-		public override void Receive(Func<object, Action<object>> receiver, TimeSpan timeout)
+		public override void Receive(Func<object, Action<object>> receiver, IReceiveContext context, TimeSpan timeout)
 		{
 			if (_disposed) throw NewDisposedException();
 
-			_transport.Receive(ReceiveFromTransport(receiver), timeout);
+			_transport.Receive(ReceiveFromTransport(receiver, context), timeout);
 		}
 
 		protected override void Dispose(bool disposing)
@@ -82,12 +90,7 @@ namespace MassTransit.Transports
 			_disposed = true;
 		}
 
-		private void PopulateTransportMessage<T>(Stream transportMessage, T message)
-		{
-			Serializer.Serialize(transportMessage, message);
-		}
-
-		private Func<Stream, Action<Stream>> ReceiveFromTransport(Func<object, Action<object>> receiver)
+		private Func<Stream, Action<Stream>> ReceiveFromTransport(Func<object, Action<object>> receiver, IReceiveContext context)
 		{
 			return message =>
 				{
@@ -95,7 +98,7 @@ namespace MassTransit.Transports
 
 					try
 					{
-						messageObj = Serializer.Deserialize(message);
+						messageObj = Serializer.Deserialize(message, context);
 					}
 					catch (SerializationException sex)
 					{

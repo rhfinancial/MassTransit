@@ -45,7 +45,7 @@ namespace MassTransit.Tests.Serialization
 			XmlMessageSerializer serializer = new XmlMessageSerializer();
 			using (var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(InterfaceBasedMessageXml)))
 			{
-				object obj = serializer.Deserialize(bodyStream);
+				object obj = serializer.Deserialize(bodyStream, _receiveContext);
 
 				Assert.IsNotNull(obj);
 			}

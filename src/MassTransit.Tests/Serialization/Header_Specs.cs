@@ -13,11 +13,9 @@
 namespace MassTransit.Tests.Serialization
 {
 	using System;
-	using System.Diagnostics;
 	using System.IO;
-	using System.Text;
+	using Context;
 	using Magnum.DateTimeExtensions;
-	using MassTransit.Internal;
 	using MassTransit.Serialization;
 	using Messages;
 	using NUnit.Framework;
@@ -26,10 +24,28 @@ namespace MassTransit.Tests.Serialization
 	public class Setting_the_message_expiration
 		: SerializationSpecificationBase
 	{
-		[Test]
-		public void Should_not_impact_others_if_not_set()
+		private void VerifyMessageHeaderIsPassed(Action<ISendContext> setHeaderAction, Action<IReceiveContext> checkHeaderAction)
 		{
-			VerifyMessageHeaderIsPassed(x => { }, x => { });
+			byte[] data;
+			var serializer = new XmlMessageSerializer();
+
+			setHeaderAction(_sendContext);
+
+			var message = new PingMessage();
+
+			using (var output = new MemoryStream())
+			{
+				serializer.Serialize(output, message, _sendContext);
+
+				data = output.ToArray();
+			}
+
+			using (var input = new MemoryStream(data))
+			{
+				serializer.Deserialize(input, _receiveContext);
+
+				checkHeaderAction(_receiveContext);
+			}
 		}
 
 		[Test]
@@ -40,32 +56,10 @@ namespace MassTransit.Tests.Serialization
 			VerifyMessageHeaderIsPassed(x => x.ExpiresAt(expiration), x => { Assert.AreEqual(expiration.ToUniversalTime(), x.ExpirationTime); });
 		}
 
-		private void VerifyMessageHeaderIsPassed(Action<IOutboundMessage> setHeaderAction, Action<IInboundMessageHeaders> checkHeaderAction)
+		[Test]
+		public void Should_not_impact_others_if_not_set()
 		{
-			byte[] data;
-			var serializer = new XmlMessageSerializer();
-
-			OutboundMessage.Set(setHeaderAction);
-
-			var message = new PingMessage();
-
-			using (MemoryStream output = new MemoryStream())
-			{
-				serializer.Serialize(output, message);
-
-				data = output.ToArray();
-			}
-
-			Trace.WriteLine(OutboundMessage.Headers.MessageType);
-
-			Trace.WriteLine(Encoding.UTF8.GetString(data));
-
-			using (MemoryStream input = new MemoryStream(data))
-			{
-				serializer.Deserialize(input);
-
-				checkHeaderAction(CurrentMessage.Headers);
-			}
+			VerifyMessageHeaderIsPassed(x => { }, x => { });
 		}
 	}
 }

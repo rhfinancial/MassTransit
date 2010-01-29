@@ -15,17 +15,22 @@ namespace MassTransit.Tests.Serialization
 	using System.Diagnostics;
 	using System.IO;
 	using System.Text;
+	using Context;
 	using MassTransit.Serialization;
 	using NUnit.Framework;
 
 	public abstract class SerializationTest
 	{
 		private XmlMessageSerializer _serializer;
+		protected ISendContext _sendContext;
+		protected IReceiveContext _receiveContext;
 
 		[TestFixtureSetUp]
 		public void Setup()
 		{
 			_serializer = new XmlMessageSerializer();
+			_sendContext = new PublishContext();
+			_receiveContext = new ConsumeContext();
 		}
 
 		protected T SerializeAndReturn<T>(T obj)
@@ -35,7 +40,7 @@ namespace MassTransit.Tests.Serialization
 
 			using (var output = new MemoryStream())
 			{
-				_serializer.Serialize(output, obj);
+				_serializer.Serialize(output, obj, _sendContext);
 
 				serializedMessageData = output.ToArray();
 
@@ -44,7 +49,7 @@ namespace MassTransit.Tests.Serialization
 
 			using (var input = new MemoryStream(serializedMessageData))
 			{
-				var result = _serializer.Deserialize(input) as T;
+				var result = _serializer.Deserialize(input, _receiveContext) as T;
 
 				return result;
 			}

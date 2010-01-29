@@ -14,6 +14,7 @@ namespace MassTransit.Transports.Msmq.Tests
 {
 	using System;
 	using System.Messaging;
+	using Context;
 	using MassTransit.Tests.Messages;
 	using NUnit.Framework;
 	using TestFixtures;
@@ -37,7 +38,7 @@ namespace MassTransit.Transports.Msmq.Tests
 						Assert.Fail("Receive should have thrown a serialization exception");
 
 						return null;
-					});
+					}, new ConsumeContext());
 			}
 			catch (Exception ex)
 			{
@@ -60,7 +61,7 @@ namespace MassTransit.Transports.Msmq.Tests
 					count++;
 
 					return null;
-				});
+				}, new ConsumeContext());
 
 			Assert.AreEqual(1, count);
 		}
@@ -74,7 +75,7 @@ namespace MassTransit.Transports.Msmq.Tests
 					count++;
 
 					return null;
-				});
+				}, new ConsumeContext());
 
 			Assert.AreEqual(0, count);
 		}
@@ -91,7 +92,7 @@ namespace MassTransit.Transports.Msmq.Tests
 					count++;
 
 					return null;
-				});
+				}, new ConsumeContext());
 
 			int secondCount = 0;
 			Endpoint.Receive(message =>
@@ -100,7 +101,7 @@ namespace MassTransit.Transports.Msmq.Tests
 					secondCount++;
 
 					return null;
-				});
+				}, new ConsumeContext());
 
 			Assert.AreEqual(1, count);
 			Assert.AreEqual(1, secondCount);
@@ -116,7 +117,7 @@ namespace MassTransit.Transports.Msmq.Tests
 					Assert.IsInstanceOfType(typeof (PingMessage), message);
 
 					return m => { };
-				});
+				}, new ConsumeContext());
 
 			int count = 0;
 			Endpoint.Receive(message =>
@@ -125,7 +126,7 @@ namespace MassTransit.Transports.Msmq.Tests
 					count++;
 
 					return null;
-				});
+				}, new ConsumeContext());
 
 			Assert.AreEqual(0, count);
 		}

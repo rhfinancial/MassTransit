@@ -160,10 +160,11 @@ namespace MassTransit
 		{
 			Stopwatch publishDuration = Stopwatch.StartNew();
 
-			IOutboundMessageContext context = OutboundMessage.Context;
-
-			context.SetSourceAddress(Endpoint.Uri);
-			context.SetMessageType(typeof (T));
+			Context<IPublishContext>(x =>
+				{
+					x.SetSourceAddress(Endpoint.Uri);
+					x.SetMessageType(typeof (T));
+				});
 
 			int publishedCount = 0;
 			foreach (var consumer in OutboundPipeline.Enumerate(message))
@@ -184,7 +185,7 @@ namespace MassTransit
 
 			if (publishedCount == 0)
 			{
-				context.NotifyNoSubscribers(message);
+				Context<IPublishContext>(x => x.NotifyNoSubscribers(message));
 			}
 
 			_eventAggregator.Send(new MessagePublished
@@ -194,10 +195,8 @@ namespace MassTransit
 					Duration = publishDuration.Elapsed,
 				});
 
-			context.Reset();
+			_contextProvider.Initialize();
 		}
-
-		//		endpoint.Send(message, info.TimeToLive);
 
 		public TService GetService<TService>()
 		{

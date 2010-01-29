@@ -15,26 +15,26 @@ namespace MassTransit.Serialization
 	using System;
 	using System.IO;
 	using System.Runtime.Serialization;
+	using Context;
 	using Custom;
-	using Internal;
 
 	public class XmlMessageSerializer :
 		IMessageSerializer
 	{
 		private static readonly IXmlSerializer _serializer = new CustomXmlSerializer();
 
-		public void Serialize<T>(Stream stream, T message)
+		public void Serialize<T>(Stream stream, T message, ISendContext context)
 		{
 			try
 			{
-				var envelope = XmlMessageEnvelope.Create(message);
+				XmlMessageEnvelope envelope = XmlMessageEnvelope.Create(message, context);
 
 				_serializer.Serialize(stream, envelope, (declaringType, propertyType, value) =>
 					{
-						if (declaringType == typeof(XmlMessageEnvelope) && propertyType == typeof(object))
+						if (declaringType == typeof (XmlMessageEnvelope) && propertyType == typeof (object))
 							return typeof (T);
 
-						if (propertyType == typeof(object))
+						if (propertyType == typeof (object))
 							return value.GetType();
 
 						return propertyType;
@@ -50,7 +50,7 @@ namespace MassTransit.Serialization
 			}
 		}
 
-		public object Deserialize(Stream stream)
+		public object Deserialize(Stream stream, IReceiveContext context)
 		{
 			try
 			{
@@ -63,7 +63,7 @@ namespace MassTransit.Serialization
 				{
 					var envelope = message as XmlMessageEnvelope;
 
-					InboundMessageHeaders.SetCurrent(envelope.GetMessageHeadersSetAction());
+					envelope.SetReceiveContext(context);
 
 					return envelope.Message;
 				}

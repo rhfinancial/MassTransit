@@ -35,5 +35,15 @@ namespace MassTransit.Context
 
 		void SetMessageType(Type messageType);
 		void SetMessageType(string messageType);
+
+		void SendResponseTo(IServiceBus bus);
+		void SendResponseTo(IEndpoint endpoint);
+		void SendResponseTo(Uri uri);
+
+		void SendFaultTo(IServiceBus bus);
+		void SendFaultTo(IEndpoint endpoint);
+		void SendFaultTo(Uri uri);
+
+		void ExpiresAt(DateTime value);
 	}
 }

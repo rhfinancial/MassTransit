@@ -17,6 +17,7 @@ namespace MassTransit.Serialization
 	using System.IO;
 	using System.Runtime.Remoting.Messaging;
 	using System.Runtime.Serialization.Formatters.Binary;
+	using Context;
 	using Internal;
 	using log4net;
 	using Magnum.ObjectExtensions;
@@ -43,14 +44,14 @@ namespace MassTransit.Serialization
 
 		private static readonly BinaryFormatter _formatter = new BinaryFormatter();
 
-		public void Serialize<T>(Stream output, T message)
+		public void Serialize<T>(Stream output, T message, ISendContext context)
 		{
 			CheckConvention.EnsureSerializable(message);
 
 			_formatter.Serialize(output, message, GetHeaders());
 		}
 
-		public object Deserialize(Stream input)
+		public object Deserialize(Stream input, IReceiveContext context)
 		{
 			object obj = _formatter.Deserialize(input, DeserializeHeaderHandler);
 

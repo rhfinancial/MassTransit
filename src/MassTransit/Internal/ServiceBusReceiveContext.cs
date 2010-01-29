@@ -16,6 +16,7 @@ namespace MassTransit.Internal
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Threading;
+	using Context;
 	using Events;
 	using Exceptions;
 	using log4net;
@@ -82,7 +83,7 @@ namespace MassTransit.Internal
 						}
 
 						return DeliverMessageToConsumers;
-					}, _receiveTimeout);
+					}, _bus.Context<IReceiveContext, IReceiveContext>(x => x), _receiveTimeout);
 			}
 			catch (Exception ex)
 			{
