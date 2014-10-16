@@ -1,0 +1,11 @@
+Samples
+-------
+
+- HelloWorld C++: 
+  A simple C/C++ sample application covering basic usage of dynaTrace ADK C/C++ language bindings and tagging
+
+- Java and JNI:
+  A sample application demonstrating tagging java call to JNI functions
+
+- MultiApp:
+  A sample application implemented in C++, Java and .NET demonstrating tagging over sockets.
