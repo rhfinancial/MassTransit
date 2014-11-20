@@ -1,0 +1,15 @@
+MultiApp Sample
+---------------
+
+This sample demonstrates the principles of tagging over sockets with the
+dynaTrace ADK. There are implementations of the same application for the
+following platforms available:
+
+ - Native/: a C++ implementation
+ - Java/:   a Java implementation
+ - DotNet/: a .NET implementation (only available on Windows)
+
+The application itself is a console application, offering you  to either 
+start a server or submit a request to the server.  Hostname and port are
+hardcoded in the sources. A request consists of two 64-bit values, while
+the response is a single 64-bit value, the product of the values sent.
