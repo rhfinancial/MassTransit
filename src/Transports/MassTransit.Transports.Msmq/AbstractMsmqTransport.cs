@@ -30,18 +30,37 @@ namespace MassTransit.Transports.Msmq
 	public class AbstractMsmqTransport :
 		IMsmqTransport
 	{
-		private static readonly ILog _log = LogManager.GetLogger(typeof (NonTransactionalMsmqTransport));
+	    private static readonly ILog _log = LogManager.GetLogger(typeof (NonTransactionalMsmqTransport));
 		private static readonly ILog _messageLog = LogManager.GetLogger("MassTransit.Msmq.MessageLog");
 		private IMsmqEndpointAddress _address;
 		private bool _disposed;
 		private MessageQueue _queue;
+        
+        // DynaTrace stuff
+	    private static readonly Tagging Adk;
+        private const int MagicInt = 395394190;
+        private const int TracetagSize = 1 /* Version */+ 1 /* Size */+ 4 /* ServerId */+ 4 * 6;
+        private const int TraceTagLength = TracetagSize + 4;
 
-		protected AbstractMsmqTransport(IMsmqEndpointAddress address)
+	    protected AbstractMsmqTransport(IMsmqEndpointAddress address)
 		{
 			_address = address;
 		}
 
-		public IEndpointAddress Address
+	    static AbstractMsmqTransport()
+	    {
+	        Adk = DynaTraceInitializeAdk();
+	    }
+
+        private static Tagging DynaTraceInitializeAdk()
+        {
+            // ADK - Get tag here
+            DynaTraceADKFactory.initialize();
+            var adk = DynaTraceADKFactory.createTagging();
+            return adk;
+        }
+        
+        public IEndpointAddress Address
 		{
 			get { return _address; }
 		}
@@ -78,18 +97,17 @@ namespace MassTransit.Transports.Msmq
 
 			bool received = false;
 
-			using (MessageEnumerator enumerator = _queue.GetMessageEnumerator2())
+		    using (MessageEnumerator enumerator = _queue.GetMessageEnumerator2())
 			{
 				if (_log.IsDebugEnabled)
 					_log.DebugFormat("Enumerating endpoint: {0} ({1}ms)", Address, timeout);
-
 
                 // ADK - Add MessageReadPorpertyFilter to get Extension
 			    _queue.MessageReadPropertyFilter.Extension = true;
 
 			    while (enumerator.MoveNext(timeout))
 			    {
-			        Message current = enumerator.Current;
+			        var current = enumerator.Current;
 			        if (current == null)
 			        {
 			            if (_log.IsDebugEnabled)
@@ -97,21 +115,15 @@ namespace MassTransit.Transports.Msmq
 
 			            continue;
 			        }
-			        // ADK - Get tag here
-			        DynaTraceADKFactory.initialize();
-			        Tagging adk = DynaTraceADKFactory.createTagging();
 			        // Get the tag from current.Extension
-                    byte[] data = current.Extension;
+                    var data = current.Extension;
 
-                    int MAGIC_INT = 395394190;
-                    int TRACETAG_SIZE = 1 /* Version */+ 1 /* Size */+ 4 /* ServerId */+ 4 * 6;
-                    int traceTagLength = TRACETAG_SIZE + 4;
-                    if (data != null && data.Length >= traceTagLength)
+			        if (data.Length >= TraceTagLength)
                     {
-                        int offset = data.Length - traceTagLength;
-                        int tagOffset = offset + TRACETAG_SIZE;
-                        int magic = data[tagOffset] << 24 | (data[tagOffset + 1] << 16) | (data[tagOffset + 2] << 8) | (data[tagOffset + 3]);
-                        if (magic == MAGIC_INT)
+                        var offset = data.Length - TraceTagLength;
+                        var tagOffset = offset + TracetagSize;
+                        var magic = data[tagOffset] << 24 | (data[tagOffset + 1] << 16) | (data[tagOffset + 2] << 8) | (data[tagOffset + 3]);
+                        if (magic == MagicInt)
                         {
                             byte[] original;
                             if (offset == 0)
@@ -125,16 +137,23 @@ namespace MassTransit.Transports.Msmq
                                 Array.Copy(data, original, offset);
                             }
                             current.Extension = original;
-                            byte[] tag = new byte[traceTagLength];
-                            Array.Copy(data, offset, tag, 0, traceTagLength);
+                            var tag = new byte[TraceTagLength];
+                            Array.Copy(data, offset, tag, 0, TraceTagLength);
 
-                            adk.setTag(tag);
-                            adk.startServerPurePath();
+                            if (Adk != null)
+                            {
+                                Adk.setTag(tag);
+                                Adk.startServerPurePath();
+                            }
+                            else
+                            {
+                                _log.DebugFormat("DynaTrace was not initialized");
+                            }
                         }
                     }
 
 
-			    Action<Message> receive = receiver(current);
+			        var receive = receiver(current);
 					if (receive == null)
 					{
 						if (_log.IsDebugEnabled)
@@ -168,7 +187,7 @@ namespace MassTransit.Transports.Msmq
 			return received;
 		}
 
-		public virtual void Send(Action<Message> sender)
+	    public virtual void Send(Action<Message> sender)
 		{
 			if (_disposed) throw NewDisposedException();
 
