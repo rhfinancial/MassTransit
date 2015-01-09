@@ -116,7 +116,7 @@ namespace MassTransit.Transports.Msmq
 			        // Get the tag from current.Extension
                     var data = current.Extension;
 
-			        if (data.Length >= TraceTagLength)
+			        if (data != null && data.Length >= TraceTagLength)
                     {
                         var offset = data.Length - TraceTagLength;
                         var tagOffset = offset + TracetagSize;
@@ -247,10 +247,9 @@ namespace MassTransit.Transports.Msmq
 		protected virtual void ReceiveMessage(MessageEnumerator enumerator, TimeSpan timeout, Action<Func<Message>> receiveAction)
 		{
 			receiveAction(() => enumerator.RemoveCurrent(timeout, MessageQueueTransactionType.None));
+
             // ADK - End Server PurePath Here
-            DynaTraceADKFactory.initialize();
-		    Tagging adk = DynaTraceADKFactory.createTagging();
-            adk.endServerPurePath();
+            Adk.endServerPurePath();
 		}
 
 		protected virtual void Dispose(bool disposing)
