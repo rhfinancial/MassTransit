@@ -116,7 +116,7 @@ namespace MassTransit.Transports.Msmq
 			        // Get the tag from current.Extension
                     var data = current.Extension;
 
-                    if (data != null && data.Length >= TraceTagLength)
+			        if (data.Length >= TraceTagLength)
                     {
                         var offset = data.Length - TraceTagLength;
                         var tagOffset = offset + TracetagSize;
