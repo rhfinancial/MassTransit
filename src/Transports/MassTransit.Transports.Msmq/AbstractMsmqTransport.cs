@@ -247,10 +247,7 @@ namespace MassTransit.Transports.Msmq
 		protected virtual void ReceiveMessage(MessageEnumerator enumerator, TimeSpan timeout, Action<Func<Message>> receiveAction)
 		{
 			receiveAction(() => enumerator.RemoveCurrent(timeout, MessageQueueTransactionType.None));
-            // ADK - End Server PurePath Here
-            DynaTraceADKFactory.initialize();
-		    Tagging adk = DynaTraceADKFactory.createTagging();
-            adk.endServerPurePath();
+            Adk.endServerPurePath();
 		}
 
 		protected virtual void Dispose(bool disposing)
