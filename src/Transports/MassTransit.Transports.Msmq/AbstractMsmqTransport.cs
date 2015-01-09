@@ -48,7 +48,9 @@ namespace MassTransit.Transports.Msmq
 	    static AbstractMsmqTransport()
 	    {
 	        Adk = DynaTraceInitializeAdk();
-	    }
+            if (Adk == null)
+                _log.Warn("DynaTrace was not initialized");
+        }
 
         private static Tagging DynaTraceInitializeAdk()
         {
@@ -93,7 +95,7 @@ namespace MassTransit.Transports.Msmq
 		{
 			if (_disposed) throw NewDisposedException();
 
-			bool received = false;
+			var received = false;
 
 		    using (MessageEnumerator enumerator = _queue.GetMessageEnumerator2())
 			{
@@ -113,43 +115,8 @@ namespace MassTransit.Transports.Msmq
 
 			            continue;
 			        }
-			        // Get the tag from current.Extension
-                    var data = current.Extension;
 
-			        if (data != null && data.Length >= TraceTagLength)
-                    {
-                        var offset = data.Length - TraceTagLength;
-                        var tagOffset = offset + TracetagSize;
-                        var magic = data[tagOffset] << 24 | (data[tagOffset + 1] << 16) | (data[tagOffset + 2] << 8) | (data[tagOffset + 3]);
-                        if (magic == MagicInt)
-                        {
-                            byte[] original;
-                            if (offset == 0)
-                            {
-                                // we do not set the extension to new byte[0] to prevent an aliasing bug in System.Messaging
-                                original = new byte[1];
-                            }
-                            else
-                            {
-                                original = new byte[offset];
-                                Array.Copy(data, original, offset);
-                            }
-                            current.Extension = original;
-                            var tag = new byte[TraceTagLength];
-                            Array.Copy(data, offset, tag, 0, TraceTagLength);
-
-                            if (Adk != null)
-                            {
-                                Adk.setTag(tag);
-                                Adk.startServerPurePath();
-                            }
-                            else
-                            {
-                                _log.DebugFormat("DynaTrace was not initialized");
-                            }
-                        }
-                    }
-
+			        AddAdkTag(current);
 
 			        var receive = receiver(current);
 					if (receive == null)
@@ -184,6 +151,39 @@ namespace MassTransit.Transports.Msmq
 
 			return received;
 		}
+
+	    private static void AddAdkTag(Message current)
+	    {
+	        if (Adk == null) 
+                return;
+	        // Get the tag from current.Extension
+	        var data = current.Extension;
+
+	        if (data == null || data.Length < TraceTagLength) 
+	            return;
+	        var offset = data.Length - TraceTagLength;
+	        var tagOffset = offset + TracetagSize;
+	        var magic = data[tagOffset] << 24 | (data[tagOffset + 1] << 16) | (data[tagOffset + 2] << 8) | (data[tagOffset + 3]);
+	        if (magic != MagicInt) 
+	            return;
+	        byte[] original;
+	        if (offset == 0)
+	        {
+	            // we do not set the extension to new byte[0] to prevent an aliasing bug in System.Messaging
+	            original = new byte[1];
+	        }
+	        else
+	        {
+	            original = new byte[offset];
+	            Array.Copy(data, original, offset);
+	        }
+	        current.Extension = original;
+	        var tag = new byte[TraceTagLength];
+	        Array.Copy(data, offset, tag, 0, TraceTagLength);
+
+	        Adk.setTag(tag);
+	        Adk.startServerPurePath();
+	    }
 
 	    public virtual void Send(Action<Message> sender)
 		{
@@ -249,7 +249,8 @@ namespace MassTransit.Transports.Msmq
 			receiveAction(() => enumerator.RemoveCurrent(timeout, MessageQueueTransactionType.None));
 
             // ADK - End Server PurePath Here
-            Adk.endServerPurePath();
+            if (Adk != null)
+                Adk.endServerPurePath();
 		}
 
 		protected virtual void Dispose(bool disposing)
