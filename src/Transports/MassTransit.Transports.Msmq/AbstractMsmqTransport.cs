@@ -116,7 +116,13 @@ namespace MassTransit.Transports.Msmq
 			            continue;
 			        }
 
-			        AddAdkTag(current);
+			        var tag = AddAdkTag(current);
+
+			        if (tag != null)
+			        {
+                        Adk.setTag(tag);
+                        Adk.startServerPurePath();			            
+			        }
 
 			        var receive = receiver(current);
 					if (receive == null)
@@ -152,21 +158,25 @@ namespace MassTransit.Transports.Msmq
 			return received;
 		}
 
-	    private static void AddAdkTag(Message current)
+	    private static byte[] AddAdkTag(Message current)
 	    {
 	        if (Adk == null) 
-                return;
+                return null;
+
 	        // Get the tag from current.Extension
 	        var data = current.Extension;
 
 	        if (data == null || data.Length < TraceTagLength) 
-	            return;
+	            return null;
+
 	        var offset = data.Length - TraceTagLength;
 	        var tagOffset = offset + TracetagSize;
 	        var magic = data[tagOffset] << 24 | (data[tagOffset + 1] << 16) | (data[tagOffset + 2] << 8) | (data[tagOffset + 3]);
-	        if (magic != MagicInt) 
-	            return;
-	        byte[] original;
+
+            if (magic != MagicInt) 
+	            return null;
+
+            byte[] original;
 	        if (offset == 0)
 	        {
 	            // we do not set the extension to new byte[0] to prevent an aliasing bug in System.Messaging
@@ -181,8 +191,7 @@ namespace MassTransit.Transports.Msmq
 	        var tag = new byte[TraceTagLength];
 	        Array.Copy(data, offset, tag, 0, TraceTagLength);
 
-	        Adk.setTag(tag);
-	        Adk.startServerPurePath();
+	        return tag;
 	    }
 
 	    public virtual void Send(Action<Message> sender)
