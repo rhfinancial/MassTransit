@@ -28,18 +28,39 @@ namespace MassTransit.Transports.Msmq
 	public class AbstractMsmqTransport :
 		IMsmqTransport
 	{
-		private static readonly ILog _log = LogManager.GetLogger(typeof (NonTransactionalMsmqTransport));
+	    private static readonly ILog _log = LogManager.GetLogger(typeof (NonTransactionalMsmqTransport));
 		private static readonly ILog _messageLog = LogManager.GetLogger("MassTransit.Msmq.MessageLog");
 		private IMsmqEndpointAddress _address;
 		private bool _disposed;
 		private MessageQueue _queue;
+        
+        // DynaTrace stuff
+	    private static readonly Tagging Adk;
+        private const int MagicInt = 395394190;
+        private const int TracetagSize = 1 /* Version */+ 1 /* Size */+ 4 /* ServerId */+ 4 * 6;
+        private const int TraceTagLength = TracetagSize + 4;
 
-		protected AbstractMsmqTransport(IMsmqEndpointAddress address)
+	    protected AbstractMsmqTransport(IMsmqEndpointAddress address)
 		{
 			_address = address;
 		}
 
-		public IEndpointAddress Address
+	    static AbstractMsmqTransport()
+	    {
+	        Adk = DynaTraceInitializeAdk();
+            if (Adk == null)
+                _log.Warn("DynaTrace was not initialized");
+        }
+
+        private static Tagging DynaTraceInitializeAdk()
+        {
+            // ADK - Get tag here
+            DynaTraceADKFactory.initialize();
+            var adk = DynaTraceADKFactory.createTagging();
+            return adk;
+        }
+        
+        public IEndpointAddress Address
 		{
 			get { return _address; }
 		}
@@ -74,20 +95,19 @@ namespace MassTransit.Transports.Msmq
 		{
 			if (_disposed) throw NewDisposedException();
 
-			bool received = false;
+			var received = false;
 
-			using (MessageEnumerator enumerator = _queue.GetMessageEnumerator2())
+		    using (MessageEnumerator enumerator = _queue.GetMessageEnumerator2())
 			{
 				if (_log.IsDebugEnabled)
 					_log.DebugFormat("Enumerating endpoint: {0} ({1}ms)", Address, timeout);
-
 
                 // ADK - Add MessageReadPorpertyFilter to get Extension
 			    _queue.MessageReadPropertyFilter.Extension = true;
 
 			    while (enumerator.MoveNext(timeout))
 			    {
-			        Message current = enumerator.Current;
+			        var current = enumerator.Current;
 			        if (current == null)
 			        {
 			            if (_log.IsDebugEnabled)
@@ -95,44 +115,16 @@ namespace MassTransit.Transports.Msmq
 
 			            continue;
 			        }
-			        // ADK - Get tag here
-			        DynaTraceADKFactory.initialize();
-			        Tagging adk = DynaTraceADKFactory.createTagging();
-			        // Get the tag from current.Extension
-                    byte[] data = current.Extension;
 
-                    int MAGIC_INT = 395394190;
-                    int TRACETAG_SIZE = 1 /* Version */+ 1 /* Size */+ 4 /* ServerId */+ 4 * 6;
-                    int traceTagLength = TRACETAG_SIZE + 4;
-                    if (data != null && data.Length >= traceTagLength)
-                    {
-                        int offset = data.Length - traceTagLength;
-                        int tagOffset = offset + TRACETAG_SIZE;
-                        int magic = data[tagOffset] << 24 | (data[tagOffset + 1] << 16) | (data[tagOffset + 2] << 8) | (data[tagOffset + 3]);
-                        if (magic == MAGIC_INT)
-                        {
-                            byte[] original;
-                            if (offset == 0)
-                            {
-                                // we do not set the extension to new byte[0] to prevent an aliasing bug in System.Messaging
-                                original = new byte[1];
-                            }
-                            else
-                            {
-                                original = new byte[offset];
-                                Array.Copy(data, original, offset);
-                            }
-                            current.Extension = original;
-                            byte[] tag = new byte[traceTagLength];
-                            Array.Copy(data, offset, tag, 0, traceTagLength);
+			        var tag = AddAdkTag(current);
 
-                            adk.setTag(tag);
-                            adk.startServerPurePath();
-                        }
-                    }
+			        if (tag != null)
+			        {
+                        Adk.setTag(tag);
+                        Adk.startServerPurePath();			            
+			        }
 
-
-			    Action<Message> receive = receiver(current);
+			        var receive = receiver(current);
 					if (receive == null)
 					{
 						if (_log.IsDebugEnabled)
@@ -166,7 +158,43 @@ namespace MassTransit.Transports.Msmq
 			return received;
 		}
 
-		public virtual void Send(Action<Message> sender)
+	    private static byte[] AddAdkTag(Message current)
+	    {
+	        if (Adk == null) 
+                return null;
+
+	        // Get the tag from current.Extension
+	        var data = current.Extension;
+
+	        if (data == null || data.Length < TraceTagLength) 
+	            return null;
+
+	        var offset = data.Length - TraceTagLength;
+	        var tagOffset = offset + TracetagSize;
+	        var magic = data[tagOffset] << 24 | (data[tagOffset + 1] << 16) | (data[tagOffset + 2] << 8) | (data[tagOffset + 3]);
+
+            if (magic != MagicInt) 
+	            return null;
+
+            byte[] original;
+	        if (offset == 0)
+	        {
+	            // we do not set the extension to new byte[0] to prevent an aliasing bug in System.Messaging
+	            original = new byte[1];
+	        }
+	        else
+	        {
+	            original = new byte[offset];
+	            Array.Copy(data, original, offset);
+	        }
+	        current.Extension = original;
+	        var tag = new byte[TraceTagLength];
+	        Array.Copy(data, offset, tag, 0, TraceTagLength);
+
+	        return tag;
+	    }
+
+	    public virtual void Send(Action<Message> sender)
 		{
 			if (_disposed) throw NewDisposedException();
 
@@ -228,10 +256,10 @@ namespace MassTransit.Transports.Msmq
 		protected virtual void ReceiveMessage(MessageEnumerator enumerator, TimeSpan timeout, Action<Func<Message>> receiveAction)
 		{
 			receiveAction(() => enumerator.RemoveCurrent(timeout, MessageQueueTransactionType.None));
+
             // ADK - End Server PurePath Here
-            DynaTraceADKFactory.initialize();
-		    Tagging adk = DynaTraceADKFactory.createTagging();
-            adk.endServerPurePath();
+            if (Adk != null)
+                Adk.endServerPurePath();
 		}
 
 		protected virtual void Dispose(bool disposing)
